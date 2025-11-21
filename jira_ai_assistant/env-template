@@ -1,0 +1,4 @@
+# Jira configuration - set these values with your credentials
+JIRA_URL = ""
+EMAIL = ""
+API_KEY = ""

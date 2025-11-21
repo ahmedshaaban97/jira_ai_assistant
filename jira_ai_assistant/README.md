@@ -20,6 +20,11 @@ crewai install
 ```
 ### Customizing
 
+**Create a .env file for credintials**
+- Copy the environment template into place: `cp jira_ai_assistant/env-template jira_ai_assistant/.env` (or `copy jira_ai_assistant\\env-template jira_ai_assistant\\.env` on Windows).
+- Open `jira_ai_assistant/.env` and fill in `JIRA_URL`, `EMAIL`, and `API_KEY` with your Jira credentials.
+
+
 **Add your `OPENAI_API_KEY` into the `.env` file**
 
 - Modify `src/jira_ai_assistant/config/agents.yaml` to define your agents
