@@ -15,7 +15,7 @@ EMAIL = os.getenv("EMAIL", "")
 API_KEY = os.getenv("API_KEY", "")
 
 
-# Tool 1: JiraAddCommentTool
+# Tool: JiraAddCommentTool
 class JiraAddCommentToolInput(BaseModel):
     """Input schema for JiraAddCommentTool."""
     issue_key: str = Field(..., description="The key of the Jira issue (e.g., 'PROJ-123')")
@@ -92,7 +92,7 @@ class JiraAddCommentTool(BaseTool):
         return response.json()
 
 
-# Tool 2: JiraAssignIssueTool
+# Tool: JiraAssignIssueTool
 class JiraAssignIssueToolInput(BaseModel):
     """Input schema for JiraAssignIssueTool."""
     issue_key: str = Field(..., description="The key of the Jira issue (e.g., 'PROJ-123')")
@@ -155,7 +155,7 @@ class JiraAssignIssueTool(BaseTool):
         return response.json() if response.text else {}
 
 
-# Tool 3: JiraGetUserHistoryTool
+# Tool: JiraGetUserHistoryTool
 class JiraGetUserHistoryToolInput(BaseModel):
     """Input schema for JiraGetUserHistoryTool."""
     account_id: str = Field(..., description="The account ID of the user")
