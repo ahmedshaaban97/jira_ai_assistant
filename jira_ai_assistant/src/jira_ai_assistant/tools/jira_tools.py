@@ -155,6 +155,80 @@ class JiraAssignIssueTool(BaseTool):
         return response.json() if response.text else {}
 
 
+# Tool: JiraGetAllUsersTool
+class JiraGetAllUsersToolInput(BaseModel):
+    """Input schema for JiraGetAllUsersTool."""
+    project_key: str = Field(..., description="The Jira project key (e.g., 'MH', 'PROJ')")
+
+
+class JiraGetAllUsersTool(BaseTool):
+    name: str = "jira_get_all_users"
+    description: str = (
+        "Gets all users in a project. Returns a list of dictionaries where each dictionary maps an accountId to the "
+        "user's display name."
+    )
+    args_schema: Type[BaseModel] = JiraGetAllUsersToolInput
+
+    def _run(self, project_key: str) -> list:
+        """
+        Gets all users in a given project.
+
+        Args:
+            project_key: The Jira project key (e.g., 'MH')
+
+        Returns:
+            list: List of dictionaries where each dictionary contains a single key-value pair of accountId: displayName
+
+        Raises:
+            requests.exceptions.RequestException: If the API request fails
+        """
+        jira_url = JIRA_URL.rstrip('/')
+        auth = (EMAIL, API_KEY)
+        headers = {
+            "Accept": "application/json"
+        }
+
+        # Jira endpoint for users assignable to a project
+        endpoint = f"{jira_url}/rest/api/3/user/assignable/search"
+
+        users = []
+        seen_accounts = set()
+        start_at = 0
+        max_results = 100
+
+        # Paginate through all assignable users for the project
+        while True:
+            params = {
+                "project": project_key,
+                "startAt": start_at,
+                "maxResults": max_results
+            }
+            response = requests.get(
+                endpoint,
+                params=params,
+                auth=auth,
+                headers=headers
+            )
+            response.raise_for_status()
+            batch = response.json()
+
+            if not batch:
+                break
+
+            for user in batch:
+                account_id = user.get("accountId")
+                display_name = user.get("displayName", "")
+                if account_id and account_id not in seen_accounts:
+                    users.append({account_id: display_name})
+                    seen_accounts.add(account_id)
+
+            if len(batch) < max_results:
+                break
+            start_at += max_results
+
+        return users
+
+
 # Tool: JiraGetUserHistoryTool
 class JiraGetUserHistoryToolInput(BaseModel):
     """Input schema for JiraGetUserHistoryTool."""

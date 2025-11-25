@@ -1,6 +1,6 @@
 """
 Test script for Jira tools.
-This script tests all three Jira tools: JiraAddCommentTool, JiraAssignIssueTool, and JiraGetUserHistoryTool.
+This script tests four Jira tools: JiraAddCommentTool, JiraAssignIssueTool, JiraGetUserHistoryTool, and JiraGetAllUsersTool.
 
 Usage:
     # Run from the project root (jira_ai_assistant/ directory):
@@ -28,6 +28,7 @@ sys.path.insert(0, str(src_dir))
 from jira_ai_assistant.tools.jira_tools import (
     JiraAddCommentTool,
     JiraAssignIssueTool,
+    JiraGetAllUsersTool,
     JiraGetUserHistoryTool,
 )
 
@@ -127,6 +128,40 @@ def test_jira_get_user_history():
         return False
 
 
+def test_jira_get_all_users():
+    """Test getting all users for a project."""
+    print("\n" + "="*60)
+    print("Testing JiraGetAllUsersTool")
+    print("="*60)
+
+    tool = JiraGetAllUsersTool()
+
+    # TODO: Replace with your test project key
+    project_key = "MH"  # Change this to a valid project key
+
+    print(f"\nGetting users for project: {project_key}")
+
+    try:
+        users = tool._run(project_key=project_key)
+        print(f"\nFound {len(users)} users assignable to the project")
+
+        # Display first 5 users as a sample
+        print("\nSample users (first 5):")
+        for user_map in users[:5]:
+            for account_id, display_name in user_map.items():
+                print(f"  {display_name} ({account_id})")
+
+        if len(users) > 5:
+            print(f"\n  ... and {len(users) - 5} more users")
+
+        return True
+    except Exception as e:
+        print(f"\n- Error getting users: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
+
 def check_environment():
     """Check if environment variables are set."""
     import os
@@ -178,6 +213,9 @@ def main():
     
     # Test 3: Get User History
     results.append(("Get User History", test_jira_get_user_history()))
+
+    # Test 4: Get All Users
+    results.append(("Get All Users", test_jira_get_all_users()))
     
     # Summary
     print("\n" + "="*60)
