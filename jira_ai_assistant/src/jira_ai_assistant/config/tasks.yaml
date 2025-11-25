@@ -1,6 +1,0 @@
-create_epic_issues:
-  description: >
-    Create issues that best fit the product and the team based on {project_key} and {epic_id} and details you got for that epic.
-  expected_output: >
-    A list of tasks that best fit the product and the team based on {project_key} and {epic_id} and details you got for that epic using the tools you have.
-  agent: product_manger

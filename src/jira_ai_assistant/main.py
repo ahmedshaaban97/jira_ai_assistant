@@ -12,6 +12,10 @@ warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
 # crew locally, so refrain from adding unnecessary logic into this file.
 # Replace with inputs you want to test with, it will automatically
 # interpolate any tasks and agents information
+from dotenv import load_dotenv
+load_dotenv()
+
+
 
 def run():
     """
@@ -19,7 +23,7 @@ def run():
     """
     inputs = {
         'project_key': 'MH',
-        'epic_id': 'MH-7',
+        'epic_key': 'MH-7',
     }
 
     try:

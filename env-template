@@ -1,0 +1,7 @@
+# Jira configuration - set these values with your credentials
+JIRA_URL=""
+EMAIL=""
+API_KEY=""
+
+# OpenAI configuration - required for CrewAI LLM agents
+OPENAI_API_KEY=""

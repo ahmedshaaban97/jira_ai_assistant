@@ -28,8 +28,7 @@ product_manager:
     usable to create or update Jira issues.
   allow_delegation: false
   verbose: true
-  llm:
-    model: gpt-4o-mini
+  llm: gpt-4o-mini
 
 backlog_reviewer:
   role: >
@@ -48,5 +47,4 @@ backlog_reviewer:
     over-assignment, and inconsistencies, and propose concise fixes.
   allow_delegation: false
   verbose: true
-  llm:
-    model: gpt-4o-mini
+  llm: gpt-4o-mini

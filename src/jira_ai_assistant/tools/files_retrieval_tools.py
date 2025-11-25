@@ -5,18 +5,19 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 
-# Go up from tools/ -> jira_ai_assistant/ -> src/ -> jira_ai_assistant/ -> project root
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent.parent
-# Default path for PDF files: jira_ai_assistant/src/jira_ai_assistant/resume_documents
-# From tools/: go up to jira_ai_assistant/ (parent.parent), then to resume_documents
-DEFAULT_PDF_PATH = Path(__file__).resolve().parent.parent / "resume_documents"
+# Get absolute path to the resume_documents directory
+# __file__ is in: .../jira_ai_assistant/src/jira_ai_assistant/tools/files_retrieval_tools.py
+# parent.parent gets us to: .../jira_ai_assistant/src/jira_ai_assistant/
+BASE_DIR = Path(__file__).resolve().parent.parent
+# Default path for PDF files
+DEFAULT_PDF_PATH = (BASE_DIR / "resume_documents").resolve()
 
 
 class PdfFileRetrieverInput(BaseModel):
     """Input schema for PdfFileRetriever."""
     path: str = Field(
         default="",
-        description="Directory containing PDFs or a single PDF file path. If empty or not provided, defaults to jira_ai_assistant/src/jira_ai_assistant/resume_documents."
+        description=f"Directory containing PDFs or a single PDF file path. If empty or not provided, defaults to the resume_documents directory at: {DEFAULT_PDF_PATH}"
     )
 
 
@@ -55,9 +56,13 @@ class PdfFileRetriever(BaseTool):
                     "Install it with `pip install pypdf`."
                 ) from exc
 
-        target_path = Path(path) if path else DEFAULT_PDF_PATH
+        target_path = Path(path).resolve() if path else DEFAULT_PDF_PATH
         if not target_path.exists():
-            raise FileNotFoundError(f"Provided path does not exist: {target_path}")
+            raise FileNotFoundError(
+                f"Provided path does not exist: {target_path}\n"
+                f"Current working directory: {Path.cwd()}\n"
+                f"Looking for PDFs at: {target_path.absolute()}"
+            )
 
         if target_path.is_file():
             if target_path.suffix.lower() != ".pdf":
