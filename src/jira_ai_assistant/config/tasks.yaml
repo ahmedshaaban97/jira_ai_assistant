@@ -50,6 +50,7 @@ plan_epic_backlog:
     This JSON must be valid, with no trailing commas, and ready to be
     parsed programmatically.
   agent: product_manager
+  output_file: output/plan_epic_backlog.md
 
 execute_epic_backlog:
   description: >
@@ -96,5 +97,6 @@ execute_epic_backlog:
     This JSON must reflect the actual tool results (issue keys, etc.)
     and be valid JSON without trailing commas.
   agent: product_manager
+  output_file: output/execute_epic_backlog.md
 
  
