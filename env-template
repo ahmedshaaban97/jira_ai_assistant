@@ -3,5 +3,8 @@ JIRA_URL=""
 EMAIL=""
 API_KEY=""
 
+# CrewAI Tracing Flag
+CREWAI_TRACING_ENABLED=true
+
 # OpenAI configuration - required for CrewAI LLM agents
 OPENAI_API_KEY=""
