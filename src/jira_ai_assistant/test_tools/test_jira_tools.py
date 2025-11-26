@@ -30,6 +30,7 @@ from jira_ai_assistant.tools.jira_tools import (
     JiraAssignIssueTool,
     JiraGetAllUsersTool,
     JiraGetUserHistoryTool,
+    JiraCreateIssueTool,
 )
 
 
@@ -188,6 +189,48 @@ def check_environment():
     return True
 
 
+def test_jira_create_issue():
+    """Test creating a Jira issue."""
+    print("\n" + "="*60)
+    print("Testing JiraCreateIssueTool")
+    print("="*60)
+    
+    tool = JiraCreateIssueTool()
+    
+    # TODO: Replace with your test issue key and account ID
+    project_key = 'MH'
+    summary = 'Test Story 4'
+    description = 'This is a test story'
+    issue_type = 'Task'
+    epic_key = 'MH-7'
+    parent_key = None
+    start_date = '2025-12-01'
+    due_date = '2025-12-05'
+    # assignee = '5fcfd938e40b82006e36206f'
+    assignee = None
+    story_points = 1
+
+    print(f"\nCreating issue: {summary}")
+    print(f"Project Key: {project_key}")
+    print(f"Epic Key: {epic_key}")
+    print(f"Parent Key: {parent_key}")
+    print(f"Start Date: {start_date}")
+    print(f"Due Date: {due_date}")
+    print(f"Assignee: {assignee}")
+    print(f"Story Points: {story_points}")
+
+    try:
+        result = tool._run(project_key=project_key, summary=summary, description=description, issue_type=issue_type, epic_key=epic_key, parent_key=parent_key, start_date=start_date, due_date=due_date, assignee=assignee, story_points=story_points)
+        print("\n✓ Issue created successfully!")
+        print(f"Issue Key: {result.get('issue_key')}")
+        print(f"Issue ID: {result.get('issue_id')}")
+        return True
+    except Exception as e:
+        print(f"\n✗ Error creating issue: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
 def main():
     """Run all tests."""
     print("\n" + "="*60)
@@ -206,16 +249,19 @@ def main():
     print("\nNote: Make sure to update the test values (issue keys, account IDs) in this script!")
     
     # Test 1: Add Comment
-    results.append(("Add Comment", test_jira_add_comment()))
+    # results.append(("Add Comment", test_jira_add_comment()))
     
     # Test 2: Assign Issue
-    results.append(("Assign Issue", test_jira_assign_issue()))
+    # results.append(("Assign Issue", test_jira_assign_issue()))
     
     # Test 3: Get User History
-    results.append(("Get User History", test_jira_get_user_history()))
+    # results.append(("Get User History", test_jira_get_user_history()))
 
     # Test 4: Get All Users
     results.append(("Get All Users", test_jira_get_all_users()))
+
+    # Test 4: Create Issue
+    results.append(("Create Issue", test_jira_create_issue()))
     
     # Summary
     print("\n" + "="*60)

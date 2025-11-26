@@ -1,0 +1,102 @@
+plan_epic_backlog:
+  description: >
+    Analyze the Jira epic {epic_key} in project {project_key} together
+    with project configuration, explicit timelines, existing issues,
+    team CVs, and Jira history. Produce a complete, structured backlog
+    plan for this epic:
+      - Clear problem and outcome statement for the epic.
+      - Breakdown into Stories, Tasks, Bugs, and Sub-tasks.
+      - Dependencies between items and suggested ordering.
+      - Effort / complexity hints (e.g., approximate story points).
+      - Draft ownership suggestions per item (by person).
+      - High-level schedule aligned to the epic’s start/end dates or
+        sprint cadence, calling out risks if capacity is insufficient.
+    Use the tools to:
+      - Read epic and project issues (jira_get_all_epics,
+        jira_get_issue_details, jira_get_all_issues_with_details).
+      - Read project configuration such as sprint length, default
+        capacity, and DoD templates (config_get_project).
+      - Read team CVs from the resumes directory or a provided path
+        (pdf_file_retriever) and infer skills, seniority, and roles.
+      - Read Jira history per user to refine skill and throughput
+        estimates (jira_get_user_history).
+    Focus on the *plan* only in this task: do not create or update Jira
+    issues yet. The output will be consumed by the execution task.
+  expected_output: >
+    A well-structured JSON object with the following top-level keys:
+      - "epic_summary": short plain-text summary of the epic.
+      - "assumptions": list of assumptions about scope, timelines, and
+        capacity.
+      - "risks": list of textual risk items (id, description, impact,
+        mitigation).
+      - "backlog_items": array of objects, each with:
+          - "title": concise issue title.
+          - "type": one of ["Story", "Task", "Bug", "Sub-task"].
+          - "parent_hint": epic_key or parent issue key/name if it
+            should be a Sub-task.
+          - "description": clear plain-text description, including
+            acceptance criteria.
+          - "labels": optional list of suggested labels.
+          - "components": optional list of suggested components.
+          - "story_points_hint": integer or null.
+          - "candidate_assignees": ordered list of accountId or
+            human-readable names with reasoning.
+          - "dependency_hints": optional list of titles/keys that
+            should precede this item.
+          - "schedule_hint": suggested start/due date ranges relative
+            to the epic timeline (plain text).
+      - "schedule_overview": plain-text explanation of how work should
+        be sequenced over the epic timeline or sprints.
+    This JSON must be valid, with no trailing commas, and ready to be
+    parsed programmatically.
+  agent: product_manager
+  output_file: output/plan_epic_backlog.md
+
+execute_epic_backlog:
+  description: >
+    Take the structured backlog plan (JSON) produced by plan_epic_backlog
+    for epic {epic_key} in project {project_key} and turn it into actual
+    Jira issues with realistic assignments and dates. For each planned
+    backlog item:
+      - Create or update Jira issues (Story, Task, Bug, Sub-task) under
+        the correct epic or parent.
+      - Decide a single assignee based on CV skills, Jira history, and
+        current workload. Avoid over-assigning any individual
+        beyond reasonable capacity for the timeframe.
+      - Set start_date and due_date in Jira within the epic timeline
+        assuming each sprint is 2 weeks.
+      - Optionally set story points and labels/components if supported.
+      - Log relevant actions to the internal DB for traceability.
+    If you detect that the plan is infeasible (e.g., capacity too low
+    for the timeline), still create the issues but:
+      - Prefer to schedule critical path work earlier.
+      - Add comments to the epic or key issues explaining the risk and
+        proposing mitigations (e.g., scope cut, more people, longer
+        timeline).
+  expected_output: >
+    A JSON object capturing what was actually done in Jira:
+      - "epic_key": the epic key.
+      - "created_issues": array of objects:
+          - "issue_key": Jira issue key.
+          - "issue_type": type ("Story", "Task", "Bug", "Sub-task").
+          - "summary": final issue summary.
+          - "assignee": display name or accountId.
+          - "start_date": YYYY-MM-DD or null.
+          - "due_date": YYYY-MM-DD or null.
+          - "story_points": integer or null.
+          - "parent_key": parent issue key for sub-tasks, else null.
+      - "updated_issues": array of objects similar to "created_issues"
+        for any issues you updated (dates, assignee, story points,
+        labels, or status).
+      - "comments_added": array of objects:
+          - "issue_key": where the comment was added.
+          - "comment_summary": short description of the comment
+            content (not full text).
+      - "capacity_notes": plain-text explanation of how capacity and
+        availability were considered and any remaining risks.
+    This JSON must reflect the actual tool results (issue keys, etc.)
+    and be valid JSON without trailing commas.
+  agent: product_manager
+  output_file: output/execute_epic_backlog.md
+
+ 
