@@ -206,8 +206,8 @@ def test_jira_create_issue():
     parent_key = None
     start_date = '2025-12-01'
     due_date = '2025-12-05'
-    # assignee = '5fcfd938e40b82006e36206f'
-    assignee = None
+    assignee = '5fcfd938e40b82006e36206f'
+    # assignee = None
     story_points = 1
 
     print(f"\nCreating issue: {summary}")
@@ -249,13 +249,13 @@ def main():
     print("\nNote: Make sure to update the test values (issue keys, account IDs) in this script!")
     
     # Test 1: Add Comment
-    # results.append(("Add Comment", test_jira_add_comment()))
+    results.append(("Add Comment", test_jira_add_comment()))
     
     # Test 2: Assign Issue
-    # results.append(("Assign Issue", test_jira_assign_issue()))
+    results.append(("Assign Issue", test_jira_assign_issue()))
     
     # Test 3: Get User History
-    # results.append(("Get User History", test_jira_get_user_history()))
+    results.append(("Get User History", test_jira_get_user_history()))
 
     # Test 4: Get All Users
     results.append(("Get All Users", test_jira_get_all_users()))

@@ -18,14 +18,15 @@ API_KEY = os.getenv("API_KEY", "")
 # Tool: JiraAddCommentTool
 class JiraAddCommentToolInput(BaseModel):
     """Input schema for JiraAddCommentTool."""
-    issue_key: str = Field(..., description="The key of the Jira issue (e.g., 'PROJ-123')")
-    body: str = Field(..., description="The comment text to add")
+    issue_key: str = Field(..., description="The Jira issue key as a string (e.g., 'MH-9')")
+    body: str = Field(..., description="The comment text to add as a plain string (e.g., 'This task is blocked by infrastructure work')")
 
 
 class JiraAddCommentTool(BaseTool):
     name: str = "jira_add_comment"
     description: str = (
-        "Adds a comment to a Jira issue. Used for delayed tasks follow-up, clarifications, and risk notes."
+        "Adds a plain-text comment to a Jira issue. Use this to document risks, clarifications, blockers, "
+        "or follow-up notes on tasks. Essential for explaining capacity constraints or timeline concerns."
     )
     args_schema: Type[BaseModel] = JiraAddCommentToolInput
 
@@ -95,14 +96,15 @@ class JiraAddCommentTool(BaseTool):
 # Tool: JiraAssignIssueTool
 class JiraAssignIssueToolInput(BaseModel):
     """Input schema for JiraAssignIssueTool."""
-    issue_key: str = Field(..., description="The key of the Jira issue (e.g., 'PROJ-123')")
-    assignee_account_id: str = Field(..., description="The account ID of the person to assign the issue to")
+    issue_key: str = Field(..., description="The Jira issue key as a string (e.g., 'MH-9')")
+    assignee_account_id: str = Field(..., description="The assignee's Jira account ID as a string, NOT display name (e.g., '5fcfd938e40b82006e36206f'). Obtain from jira_get_all_users tool.")
 
 
 class JiraAssignIssueTool(BaseTool):
     name: str = "jira_assign_issue"
     description: str = (
-        "Assigns a Jira issue (Task, Story, or Subtask) to a person. Used after skill-based assignment selection."
+        "Assigns a Jira issue (Task, Story, Bug, or Sub-task) to a team member by their account ID. "
+        "Use this after matching skills from CVs and Jira history. Always use account ID, never display names."
     )
     args_schema: Type[BaseModel] = JiraAssignIssueToolInput
 
@@ -158,14 +160,15 @@ class JiraAssignIssueTool(BaseTool):
 # Tool: JiraGetAllUsersTool
 class JiraGetAllUsersToolInput(BaseModel):
     """Input schema for JiraGetAllUsersTool."""
-    project_key: str = Field(..., description="The Jira project key (e.g., 'MH', 'PROJ')")
+    project_key: str = Field(..., description="The Jira project key as a string (e.g., 'MH')")
 
 
 class JiraGetAllUsersTool(BaseTool):
     name: str = "jira_get_all_users"
     description: str = (
-        "Gets all users in a project. Returns a list of dictionaries where each dictionary maps an accountId to the "
-        "user's display name."
+        "Retrieves all assignable users in a Jira project. Returns a list of dictionaries mapping account IDs "
+        "to display names (e.g., [{'5fcfd938e40b82006e36206f': 'Ahmed Shaaban'}]). Use this to get valid "
+        "account IDs before assigning issues. Essential for planning assignments."
     )
     args_schema: Type[BaseModel] = JiraGetAllUsersToolInput
 
@@ -232,15 +235,16 @@ class JiraGetAllUsersTool(BaseTool):
 # Tool: JiraGetUserHistoryTool
 class JiraGetUserHistoryToolInput(BaseModel):
     """Input schema for JiraGetUserHistoryTool."""
-    account_id: str = Field(..., description="The account ID of the user")
+    account_id: str = Field(..., description="The user's Jira account ID as a string (e.g., '5fcfd938e40b82006e36206f'). Obtain from jira_get_all_users tool.")
 
 
 class JiraGetUserHistoryTool(BaseTool):
     name: str = "jira_get_user_history"
     description: str = (
-        "Gets all history of a user, containing assigned tasks, descriptions, status, dates, work logs, etc. "
-        "Returns aggregated stats for all issues assigned to them including start_date, end_date, status, "
-        "issue_type, description, due_date, work_log, and other useful information."
+        "Retrieves complete work history for a user including all assigned issues, their types, status, dates, "
+        "work logs, and descriptions. Returns dict keyed by issue_key (e.g., 'MH-8') with issue_type, status, "
+        "start_date, due_date, work_log, summary, priority. Use this to assess user skills, throughput, and "
+        "current workload before making assignments."
     )
     args_schema: Type[BaseModel] = JiraGetUserHistoryToolInput
 
@@ -408,14 +412,16 @@ class JiraGetUserHistoryTool(BaseTool):
 # Tool: JiraGetAllEpicsTool
 class JiraGetAllEpicsToolInput(BaseModel):
     """Input schema for JiraGetAllEpicsTool."""
-    project_key: str = Field(..., description="The Jira project key (e.g., 'MH', 'PROJ')")
+    project_key: str = Field(..., description="The Jira project key as a string (e.g., 'MH')")
+    
 
 
 class JiraGetAllEpicsTool(BaseTool):
     name: str = "jira_get_all_epics"
     description: str = (
-        "Gets all epics for a given project. Returns a list of epics with their summary, key, description, "
-        "creation date, start date, due date, and status."
+        "Retrieves all epics in a project with comprehensive details. Returns list of dicts containing "
+        "epic_key (e.g., 'MH-7'), epic_summary, epic_description, epic_created_at, epic_start_date, "
+        "epic_due_date, and epic_status. Use this to understand epic scope and timelines before planning work."
     )
     args_schema: Type[BaseModel] = JiraGetAllEpicsToolInput
 
@@ -510,14 +516,16 @@ class JiraGetAllEpicsTool(BaseTool):
 # Tool: JiraGetIssueDetailsTool
 class JiraGetIssueDetailsToolInput(BaseModel):
     """Input schema for JiraGetIssueDetailsTool."""
-    issue_key: str = Field(..., description="The Jira issue key or ID (e.g., 'PROJ-123' or '10038')")
+    issue_key: str = Field(..., description="The Jira issue key as a string (e.g., 'MH-9')")
 
 
 class JiraGetIssueDetailsTool(BaseTool):
     name: str = "jira_get_issue_details"
     description: str = (
-        "Gets detailed information for a specific Jira issue. Returns comprehensive details including "
-        "summary, description, status, dates, assignee, priority, epic link, parent, story points, labels, and components."
+        "Retrieves comprehensive details for a specific issue. Returns dict with issue_key, issue_summary, "
+        "issue_description, issue_type, issue_status, issue_created_at, issue_updated_at, issue_due_date, "
+        "issue_start_date, issue_assignee, issue_assignee_id, issue_reporter, issue_priority, epic_key, "
+        "parent_key, story_points, labels, and components. Use to inspect existing work before updating or planning."
     )
     args_schema: Type[BaseModel] = JiraGetIssueDetailsToolInput
 
@@ -648,15 +656,16 @@ class JiraGetIssueDetailsTool(BaseTool):
 # Tool: JiraGetAllIssuesWithDetailsTool
 class JiraGetAllIssuesWithDetailsToolInput(BaseModel):
     """Input schema for JiraGetAllIssuesWithDetailsTool."""
-    project_key: str = Field(..., description="The Jira project key (e.g., 'PROJ')")
-    epic_key: str = Field(None, description="Optional epic key to filter issues (e.g., 'PROJ-7'). If None, returns all issues in the project.")
+    project_key: str = Field(..., description="The Jira project key as a string (e.g., 'MH')")
+    epic_key: str = Field("", description="Optional epic key as a string to filter issues (e.g., 'MH-7', 'PROJ-7'). If empty string, returns all non-epic issues in project.")
 
 
 class JiraGetAllIssuesWithDetailsTool(BaseTool):
     name: str = "jira_get_all_issues_with_details"
     description: str = (
-        "Gets all issues for a given project, optionally filtered by epic. Returns full details for each issue. "
-        "Use this when you need comprehensive information about all issues in a project or epic."
+        "Retrieves all issues in a project or epic with full details. Returns list of dicts with same fields "
+        "as jira_get_issue_details. Optionally filter by epic_key to see only issues linked to that epic. "
+        "Essential for understanding existing workload, assignments, and timeline conflicts before planning."
     )
     args_schema: Type[BaseModel] = JiraGetAllIssuesWithDetailsToolInput
 
@@ -819,23 +828,24 @@ class JiraGetAllIssuesWithDetailsTool(BaseTool):
 # Tool: JiraCreateIssueTool
 class JiraCreateIssueToolInput(BaseModel):
     """Input schema for JiraCreateIssueTool."""
-    project_key: str = Field(..., description="The project key (e.g., 'PROJ')")
-    summary: str = Field(..., description="The issue summary/title")
-    description: str = Field(..., description="The issue description (plain text)")
-    issue_type: str = Field(default="Task", description="The type of issue (e.g., 'Task', 'Story', 'Bug', 'Sub-task')")
-    epic_key: str = Field(None, description="The epic key to link the issue to (e.g., 'PROJ-7'). Ignored for sub-tasks.")
-    parent_key: str = Field(None, description="The parent issue key for sub-tasks (e.g., 'PROJ-10')")
-    start_date: str = Field(None, description="Start date in format 'YYYY-MM-DD'")
-    due_date: str = Field(None, description="Due date in format 'YYYY-MM-DD'")
-    assignee: str = Field(None, description="Assignee account ID")
-    story_points: int = Field(None, description="Story points value")
+    project_key: str = Field(..., description="The project key as a string (e.g., 'MH')")
+    summary: str = Field(..., description="The issue title as a string (e.g., 'Implement user authentication')")
+    description: str = Field(..., description="The issue description as plain text, including acceptance criteria (e.g., 'Build login endpoint with JWT tokens')")
+    issue_type: str = Field(default="Task", description="The issue type as a string: 'Task', 'Story', 'Bug', or 'Sub-task' (default: 'Task')")
+    epic_key: str = Field("", description="The epic key to link to as a string (e.g., 'MH-7'). Ignored for Sub-tasks (they inherit from parent).")
+    parent_key: str = Field("", description="The parent issue key for Sub-tasks as a string (e.g., 'MH-10'). Required only for Sub-tasks.")
+    start_date: str = Field("", description="Start date as string in YYYY-MM-DD format (e.g., '2025-12-01'). Optional.")
+    due_date: str = Field("", description="Due date as string in YYYY-MM-DD format (e.g., '2025-12-05'). Optional.")
+    assignee: str = Field("", description="Assignee account ID as a string (e.g., '5fcfd938e40b82006e36206f') not display name. Use jira_get_all_users to get IDs. Optional.")
+    story_points: int = Field(None, description="Story points as an integer (e.g., 1, 2, 3, 5, 8). Optional.")
 
 
 class JiraCreateIssueTool(BaseTool):
     name: str = "jira_create_issue"
     description: str = (
-        "Creates a new Jira issue (Task, Story, Bug, or Sub-task). Can link to an epic and set dates, assignee, "
-        "and story points. For sub-tasks, provide parent_key and the epic will be inherited from the parent."
+        "Creates a new Jira issue with full details. Supports Task, Story, Bug, or Sub-task types. Links to epics "
+        "automatically (Sub-tasks inherit epic from parent). Sets assignee by account ID, dates (YYYY-MM-DD), and "
+        "story points. Returns issue_key and issue_id. Use this to execute backlog plans."
     )
     args_schema: Type[BaseModel] = JiraCreateIssueToolInput
 
@@ -959,24 +969,24 @@ class JiraCreateIssueTool(BaseTool):
 # Tool: JiraUpdateIssueTool
 class JiraUpdateIssueToolInput(BaseModel):
     """Input schema for JiraUpdateIssueTool."""
-    issue_key: str = Field(..., description="The Jira issue key (e.g., 'PROJ-123')")
-    summary: str = Field(None, description="New issue summary/title")
-    description: str = Field(None, description="New issue description (plain text)")
-    assignee: str = Field(None, description="New assignee account ID (empty string to unassign)")
-    priority: str = Field(None, description="New priority name (e.g., 'High', 'Medium', 'Low')")
-    due_date: str = Field(None, description="New due date in format 'YYYY-MM-DD'")
-    start_date: str = Field(None, description="New start date in format 'YYYY-MM-DD'")
-    story_points: int = Field(None, description="New story points value")
-    labels: list = Field(None, description="New list of labels (replaces existing labels)")
-    status: str = Field(None, description="New status name (e.g., 'In Progress', 'Done')")
+    issue_key: str = Field(..., description="The Jira issue key as a string (e.g., 'MH-9')")
+    summary: str = Field("", description="New issue title as a string (e.g., 'Refactor authentication module'). Optional.")
+    description: str = Field("", description="New issue description as plain text (e.g., 'Updated requirements...'). Optional.")
+    assignee: str = Field("", description="New assignee account ID as a string (e.g., '5fcfd938e40b82006e36206f') not display name or empty string '' to unassign. Optional.")
+    priority: str = Field("", description="New priority name as a string: 'Highest', 'High', 'Medium', 'Low', 'Lowest'. Optional.")
+    due_date: str = Field("", description="New due date as string in YYYY-MM-DD format (e.g., '2025-12-10'). Optional.")
+    start_date: str = Field("", description="New start date as string in YYYY-MM-DD format (e.g., '2025-12-01'). Optional.")
+    story_points: int = Field(None, description="New story points as an integer (e.g., 3, 5, 8). Optional.")
+    labels: list = Field(None, description="New labels as list of strings (e.g., ['backend', 'urgent']). Replaces existing labels. Optional.")
+    status: str = Field("", description="New status name as a string (e.g., 'In Progress', 'Done', 'TODO'). Transitions issue to this status. Optional.")
 
 
 class JiraUpdateIssueTool(BaseTool):
     name: str = "jira_update_issue"
     description: str = (
-        "Updates an existing Jira issue with the provided fields. Can update summary, description, assignee, "
-        "priority, dates, story points, labels, and status. Only updates the fields you provide. "
-        "Status changes are handled via transitions."
+        "Updates an existing issue with selective field changes. Provide only fields to update; others remain "
+        "unchanged. Handles status transitions automatically. Use assignee='' to unassign. Returns success flag "
+        "and list of updated_fields. Essential for adjusting assignments, dates, or priorities after planning."
     )
     args_schema: Type[BaseModel] = JiraUpdateIssueToolInput
 

@@ -8,17 +8,15 @@ plan_epic_backlog:
       - Breakdown into Stories, Tasks, Bugs, and Sub-tasks.
       - Dependencies between items and suggested ordering.
       - Effort / complexity hints (e.g., approximate story points).
-      - Draft ownership suggestions per item (by person).
+      - Draft ownership suggestions per item (by assignee id using jira_get_all_users tool).
       - High-level schedule aligned to the epic’s start/end dates or
         sprint cadence, calling out risks if capacity is insufficient.
     Use the tools to:
       - Read epic and project issues (jira_get_all_epics,
         jira_get_issue_details, jira_get_all_issues_with_details).
-      - Read project configuration such as sprint length, default
-        capacity, and DoD templates (config_get_project).
       - Read team CVs from the resumes directory or a provided path
         (pdf_file_retriever) and infer skills, seniority, and roles.
-      - Read Jira history per user to refine skill and throughput
+      - Read Jira history per user id to refine skill and throughput
         estimates (jira_get_user_history).
     Focus on the *plan* only in this task: do not create or update Jira
     issues yet. The output will be consumed by the execution task.
@@ -30,21 +28,26 @@ plan_epic_backlog:
       - "risks": list of textual risk items (id, description, impact,
         mitigation).
       - "backlog_items": array of objects, each with:
-          - "title": concise issue title.
+          - "title": concise, action-oriented issue title.
           - "type": one of ["Story", "Task", "Bug", "Sub-task"].
           - "parent_hint": epic_key or parent issue key/name if it
             should be a Sub-task.
-          - "description": clear plain-text description, including
-            acceptance criteria.
+          - "description": comprehensive plain-text description including:
+              * Problem statement and context
+              * Detailed acceptance criteria (given/when/then format preferred)
+              * Definition of Done with specific deliverables
+              * implementation notes to be considered by the developer
+              * Testing requirements and edge cases to consider
+              * Any API endpoints, database changes, or integration points
           - "labels": optional list of suggested labels.
           - "components": optional list of suggested components.
           - "story_points_hint": integer or null.
-          - "candidate_assignees": ordered list of accountId or
-            human-readable names with reasoning.
+          - "assignee": str of the best candidate assignee accountId that fits for this issue using jira_get_all_users tool (Do not use names).
           - "dependency_hints": optional list of titles/keys that
             should precede this item.
           - "schedule_hint": suggested start/due date ranges relative
             to the epic timeline (plain text).
+          - "sub_tasks_hint": for Stories, include list of suggested Sub-task titles covering development, testing, documentation, and deployment.
       - "schedule_overview": plain-text explanation of how work should
         be sequenced over the epic timeline or sprints.
     This JSON must be valid, with no trailing commas, and ready to be
@@ -58,15 +61,25 @@ execute_epic_backlog:
     for epic {epic_key} in project {project_key} and turn it into actual
     Jira issues with realistic assignments and dates. For each planned
     backlog item:
-      - Create or update Jira issues (Story, Task, Bug, Sub-task) under
-        the correct epic or parent.
+      - Create Jira issues (Story, Task, Bug, Sub-task) under the correct epic or parent.
+      - Write comprehensive descriptions including:
+          * Clear problem statement and context
+          * Detailed acceptance criteria in given/when/then format
+          * Definition of Done with specific, measurable deliverables
+          * Technical approach and implementation notes
+          * Testing requirements and edge cases
+          * Integration points and dependencies
+      - For each Story, create Sub-tasks covering:
+          * Development work (frontend, backend, API, database, etc.)
+          * Testing (unit tests, integration tests, E2E tests, manual QA)
+          * Documentation (code comments, README updates, API specs, user guides)
+          * Code review and deployment preparation
       - Decide a single assignee based on CV skills, Jira history, and
         current workload. Avoid over-assigning any individual
         beyond reasonable capacity for the timeframe.
       - Set start_date and due_date in Jira within the epic timeline
         assuming each sprint is 2 weeks.
       - Optionally set story points and labels/components if supported.
-      - Log relevant actions to the internal DB for traceability.
     If you detect that the plan is infeasible (e.g., capacity too low
     for the timeline), still create the issues but:
       - Prefer to schedule critical path work earlier.
@@ -80,11 +93,13 @@ execute_epic_backlog:
           - "issue_key": Jira issue key.
           - "issue_type": type ("Story", "Task", "Bug", "Sub-task").
           - "summary": final issue summary.
-          - "assignee": display name or accountId.
+          - "description_summary": brief summary of what was included in the description (e.g., "Acceptance criteria with 3 scenarios, DoD with 5 deliverables, testing requirements").
+          - "assignee": accountId (not display name).
           - "start_date": YYYY-MM-DD or null.
           - "due_date": YYYY-MM-DD or null.
           - "story_points": integer or null.
           - "parent_key": parent issue key for sub-tasks, else null.
+          - "sub_tasks_created": for Stories, list of Sub-task keys created under this Story.
       - "updated_issues": array of objects similar to "created_issues"
         for any issues you updated (dates, assignee, story points,
         labels, or status).
