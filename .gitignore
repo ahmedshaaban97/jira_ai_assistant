@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Add crewai tracers
+output/*
+
 # C extensions
 *.so
 
