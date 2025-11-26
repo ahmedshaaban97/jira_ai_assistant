@@ -23,7 +23,7 @@ def run():
     """
     inputs = {
         'project_key': 'MH',
-        'epic_key': 'MH-7',
+        'epic_key': 'MH-3',
     }
 
     try:
