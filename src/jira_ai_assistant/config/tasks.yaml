@@ -8,7 +8,7 @@ plan_epic_backlog:
       - Breakdown into Stories, Tasks, Bugs, and Sub-tasks.
       - Dependencies between items and suggested ordering.
       - Effort / complexity hints (e.g., approximate story points).
-      - Draft ownership suggestions per item (by person).
+      - Draft ownership suggestions per item (by assignee id using jira_get_all_users tool).
       - High-level schedule aligned to the epic’s start/end dates or
         sprint cadence, calling out risks if capacity is insufficient.
     Use the tools to:
@@ -18,7 +18,7 @@ plan_epic_backlog:
         capacity, and DoD templates (config_get_project).
       - Read team CVs from the resumes directory or a provided path
         (pdf_file_retriever) and infer skills, seniority, and roles.
-      - Read Jira history per user to refine skill and throughput
+      - Read Jira history per user id to refine skill and throughput
         estimates (jira_get_user_history).
     Focus on the *plan* only in this task: do not create or update Jira
     issues yet. The output will be consumed by the execution task.
@@ -39,8 +39,7 @@ plan_epic_backlog:
           - "labels": optional list of suggested labels.
           - "components": optional list of suggested components.
           - "story_points_hint": integer or null.
-          - "candidate_assignees": ordered list of accountId or
-            human-readable names with reasoning.
+          - "assignee": str of the best candidate assigne accountId that fits for this issue using jira_get_all_users tool (Do not use names).
           - "dependency_hints": optional list of titles/keys that
             should precede this item.
           - "schedule_hint": suggested start/due date ranges relative
@@ -66,7 +65,6 @@ execute_epic_backlog:
       - Set start_date and due_date in Jira within the epic timeline
         assuming each sprint is 2 weeks.
       - Optionally set story points and labels/components if supported.
-      - Log relevant actions to the internal DB for traceability.
     If you detect that the plan is infeasible (e.g., capacity too low
     for the timeline), still create the issues but:
       - Prefer to schedule critical path work earlier.
