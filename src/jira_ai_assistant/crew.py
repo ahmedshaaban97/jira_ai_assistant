@@ -3,7 +3,6 @@ from crewai.project import CrewBase, agent, crew, task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from typing import List
 
-from .tools.db_tools import GetDbTool, UpdateDbTool
 from .tools.files_retrieval_tools import PdfFileRetriever
 from .tools.jira_tools import JiraCreateIssueTool, JiraUpdateIssueTool, JiraAssignIssueTool, JiraAddCommentTool, JiraGetAllIssuesWithDetailsTool, JiraGetUserHistoryTool, JiraGetAllEpicsTool, JiraGetAllUsersTool, JiraGetIssueDetailsTool
 from .outputs import PlanEpicBacklogOutput, ExecuteEpicBacklogOutput
@@ -22,7 +21,7 @@ class JiraAiAssistant():
         return Agent(
             config=self.agents_config['product_manager'], # type: ignore[index]
             verbose=True,
-            tools=[GetDbTool(), UpdateDbTool(), PdfFileRetriever(), JiraCreateIssueTool(), JiraUpdateIssueTool(), JiraAssignIssueTool(), JiraAddCommentTool(), JiraGetAllIssuesWithDetailsTool(), JiraGetUserHistoryTool(), JiraGetAllEpicsTool(), JiraGetAllUsersTool(), JiraGetIssueDetailsTool()]
+            tools=[PdfFileRetriever(), JiraCreateIssueTool(), JiraUpdateIssueTool(), JiraAssignIssueTool(), JiraAddCommentTool(), JiraGetAllIssuesWithDetailsTool(), JiraGetUserHistoryTool(), JiraGetAllEpicsTool(), JiraGetAllUsersTool(), JiraGetIssueDetailsTool()]
         )
 
     @task
