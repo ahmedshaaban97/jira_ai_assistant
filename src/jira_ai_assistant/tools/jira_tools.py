@@ -3,7 +3,7 @@ from typing import Any, Dict, Type
 
 import requests
 from crewai.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .utils import _extract_text_from_adf, _format_date, load_jira_env
 
@@ -649,7 +649,7 @@ class JiraGetIssueDetailsTool(BaseTool):
 class JiraGetAllIssuesWithDetailsToolInput(BaseModel):
     """Input schema for JiraGetAllIssuesWithDetailsTool."""
     project_key: str = Field(..., description="The Jira project key (e.g., 'PROJ')")
-    epic_key: str = Field(None, description="Optional epic key to filter issues (e.g., 'PROJ-7'). If None, returns all issues in the project.")
+    epic_key: str = Field("", description="Optional epic key to filter issues (e.g., 'PROJ-7'). If None, returns all issues in the project.")
 
 
 class JiraGetAllIssuesWithDetailsTool(BaseTool):
@@ -660,7 +660,7 @@ class JiraGetAllIssuesWithDetailsTool(BaseTool):
     )
     args_schema: Type[BaseModel] = JiraGetAllIssuesWithDetailsToolInput
 
-    def _run(self, project_key: str, epic_key: str = None) -> list:
+    def _run(self, project_key: str, epic_key: str = "") -> list:
         """
         Gets all issues with full details for a given project key, optionally filtered by epic.
         
@@ -816,6 +816,10 @@ class JiraGetAllIssuesWithDetailsTool(BaseTool):
         return all_issues_details
 
 
+# Define regex for Account id (hex string, variable length); pydantic-core uses Rust regex (no lookaheads)
+# ACCOUNT_ID_PATTERN = r'^[0-9a-fA-F]+$'
+# AccountId = constr(pattern=ACCOUNT_ID_PATTERN)
+
 # Tool: JiraCreateIssueTool
 class JiraCreateIssueToolInput(BaseModel):
     """Input schema for JiraCreateIssueTool."""
@@ -823,13 +827,27 @@ class JiraCreateIssueToolInput(BaseModel):
     summary: str = Field(..., description="The issue summary/title")
     description: str = Field(..., description="The issue description (plain text)")
     issue_type: str = Field(default="Task", description="The type of issue (e.g., 'Task', 'Story', 'Bug', 'Sub-task')")
-    epic_key: str = Field(None, description="The epic key to link the issue to (e.g., 'PROJ-7'). Ignored for sub-tasks.")
-    parent_key: str = Field(None, description="The parent issue key for sub-tasks (e.g., 'PROJ-10')")
-    start_date: str = Field(None, description="Start date in format 'YYYY-MM-DD'")
-    due_date: str = Field(None, description="Due date in format 'YYYY-MM-DD'")
-    assignee: str = Field(None, description="Assignee account ID")
+    epic_key: str = Field("", description="The epic key to link the issue to (e.g., 'PROJ-7'). Ignored for sub-tasks.")
+    parent_key: str = Field("", description="The parent issue key for sub-tasks (e.g., 'PROJ-10')")
+    start_date: str = Field("", description="Start date in format 'YYYY-MM-DD'")
+    due_date: str = Field("", description="Due date in format 'YYYY-MM-DD'")
+    assignee: str = Field(
+        pattern=r'^[0-9a-fA-F]+$',
+        description=(
+            "Assignee account ID, cannot be the assignee name! "
+            "IT MUST BE ASSIGNEE ID like: 5fcfd938e40b82006e36206f"
+        ),
+    )
     story_points: int = Field(None, description="Story points value")
 
+    @field_validator("assignee")
+    @classmethod
+    def validate_assignee(cls, v: str) -> str:
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Assignee ID must contain at least one digit (0–9).")
+        if not any(c.isalpha() for c in v):
+            raise ValueError("Assignee ID must contain at least one letter (a–f or A–F).")
+        return v
 
 class JiraCreateIssueTool(BaseTool):
     name: str = "jira_create_issue"
@@ -845,11 +863,11 @@ class JiraCreateIssueTool(BaseTool):
         summary: str,
         description: str,
         issue_type: str = "Task",
-        epic_key: str = None,
-        parent_key: str = None,
-        start_date: str = None,
-        due_date: str = None,
-        assignee: str = None,
+        epic_key: str = "",
+        parent_key: str = "",
+        start_date: str = "",
+        due_date: str = "",
+        assignee: str = "",
         story_points: int = None
     ) -> Dict[str, str]:
         """
@@ -882,7 +900,7 @@ class JiraCreateIssueTool(BaseTool):
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
-        
+
         # Build the core payload
         fields = {
             "project": {
@@ -960,15 +978,15 @@ class JiraCreateIssueTool(BaseTool):
 class JiraUpdateIssueToolInput(BaseModel):
     """Input schema for JiraUpdateIssueTool."""
     issue_key: str = Field(..., description="The Jira issue key (e.g., 'PROJ-123')")
-    summary: str = Field(None, description="New issue summary/title")
-    description: str = Field(None, description="New issue description (plain text)")
-    assignee: str = Field(None, description="New assignee account ID (empty string to unassign)")
-    priority: str = Field(None, description="New priority name (e.g., 'High', 'Medium', 'Low')")
-    due_date: str = Field(None, description="New due date in format 'YYYY-MM-DD'")
-    start_date: str = Field(None, description="New start date in format 'YYYY-MM-DD'")
+    summary: str = Field("", description="New issue summary/title")
+    description: str = Field("", description="New issue description (plain text)")
+    assignee: str = Field("", description="New assignee account ID (empty string to unassign)")
+    priority: str = Field("", description="New priority name (e.g., 'High', 'Medium', 'Low')")
+    due_date: str = Field("", description="New due date in format 'YYYY-MM-DD'")
+    start_date: str = Field("", description="New start date in format 'YYYY-MM-DD'")
     story_points: int = Field(None, description="New story points value")
     labels: list = Field(None, description="New list of labels (replaces existing labels)")
-    status: str = Field(None, description="New status name (e.g., 'In Progress', 'Done')")
+    status: str = Field("", description="New status name (e.g., 'In Progress', 'Done')")
 
 
 class JiraUpdateIssueTool(BaseTool):
@@ -983,15 +1001,15 @@ class JiraUpdateIssueTool(BaseTool):
     def _run(
         self,
         issue_key: str,
-        summary: str = None,
-        description: str = None,
-        assignee: str = None,
-        priority: str = None,
-        due_date: str = None,
-        start_date: str = None,
+        summary: str = "",
+        description: str = "",
+        assignee: str = "",
+        priority: str = "",
+        due_date: str = "",
+        start_date: str = "",
         story_points: int = None,
         labels: list = None,
-        status: str = None
+        status: str = ""
     ) -> Dict[str, Any]:
         """
         Updates an existing Jira issue with the provided fields.
