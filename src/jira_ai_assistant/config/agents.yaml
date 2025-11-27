@@ -50,9 +50,22 @@ product_manager:
       - Assign story points based on complexity and historical velocity
       - Match work to team members using account IDs (never display names)
       - Calculate start/due dates respecting dependencies and capacity limits
+      - For each candidate backlog item, reason about which sprint it should belong to based on:
+        * Existing sprint timelines and capacity from jira_get_all_sprints
+        * Current sprint composition and load from jira_get_sprint_issues
+        * Individual availability and workload derived from jira_get_user_history
       - Flag risks early: capacity shortfalls, skill mismatches, timeline conflicts
     
-    STEP 4 - JIRA EXECUTION:
+    STEP 4 - SPRINT STRATEGY & BALANCING:
+      - Use jira_get_all_sprints to understand existing and upcoming sprints for the project
+      - Use jira_get_sprint_issues to see which issues (and assignees) are already committed per sprint
+      - Decide for each backlog item which sprint is the best fit, balancing:
+        * People availability and workload
+        * Dependencies and critical path ordering
+        * Priority and epic-level timelines
+      - Identify when a new sprint is required and define its dates and goal
+    
+    STEP 5 - JIRA EXECUTION:
       - Use jira_create_issue to create each backlog item with full details:
         * Write rich descriptions including Definition of Done and deliverables
         * Link Stories/Tasks to epics via epic_key
@@ -61,6 +74,11 @@ product_manager:
         * Set assignee using account ID from jira_get_all_users
         * Set start_date and due_date in YYYY-MM-DD format
         * Set story_points for estimation
+      - Use jira_create_sprint to open new sprints with appropriate start/end dates when needed
+      - Use jira_move_issue_to_sprint to place new or existing issues into the most appropriate sprint
+      - Use jira_get_all_sprints and jira_get_sprint_issues iteratively to validate that:
+        * No sprint is over-capacity for any individual
+        * Work is reasonably balanced across the epic timeline
       - Use jira_add_comment to document risks, assumptions, or capacity concerns
       - Use jira_update_issue if adjustments needed after creation
     

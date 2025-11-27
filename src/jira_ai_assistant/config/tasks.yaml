@@ -18,6 +18,10 @@ plan_epic_backlog:
         (pdf_file_retriever) and infer skills, seniority, and roles.
       - Read Jira history per user id to refine skill and throughput
         estimates (jira_get_user_history).
+      - Inspect the sprint structure and current load for the project
+        using jira_get_all_sprints and jira_get_sprint_issues so you
+        can reason about which sprints are the best fit for the planned
+        work, without modifying Jira yet.
     Focus on the *plan* only in this task: do not create or update Jira
     issues yet. The output will be consumed by the execution task.
   expected_output: >
@@ -59,7 +63,8 @@ execute_epic_backlog:
   description: >
     Take the structured backlog plan (JSON) produced by plan_epic_backlog
     for epic {epic_key} in project {project_key} and turn it into actual
-    Jira issues with realistic assignments and dates. For each planned
+    Jira issues with realistic assignments, dates, and sprint placement.
+    For each planned
     backlog item:
       - Create Jira issues (Story, Task, Bug, Sub-task) under the correct epic or parent.
       - Write comprehensive descriptions including:
@@ -79,6 +84,15 @@ execute_epic_backlog:
         beyond reasonable capacity for the timeframe.
       - Set start_date and due_date in Jira within the epic timeline
         assuming each sprint is 2 weeks.
+      - Decide and apply sprint allocation by:
+          * Using jira_get_all_sprints to discover active and future sprints
+          * Using jira_get_sprint_issues to understand current load per sprint
+            and per assignee
+          * Creating new sprints with jira_create_sprint when there is no
+            suitable existing sprint for the planned work
+          * Moving newly created or existing issues into the chosen sprint
+            using jira_move_issue_to_sprint so workload is balanced across
+            people and timeframes.
       - Optionally set story points and labels/components if supported.
     If you detect that the plan is infeasible (e.g., capacity too low
     for the timeline), still create the issues but:
@@ -113,5 +127,3 @@ execute_epic_backlog:
     and be valid JSON without trailing commas.
   agent: product_manager
   output_file: output/execute_epic_backlog.md
-
- 

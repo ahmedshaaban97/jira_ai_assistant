@@ -31,6 +31,10 @@ from jira_ai_assistant.tools.jira_tools import (
     JiraGetAllUsersTool,
     JiraGetUserHistoryTool,
     JiraCreateIssueTool,
+    JiraCreateSprintTool,
+    JiraGetAllSprintsTool,
+    JiraGetSprintIssuesTool,
+    JiraMoveIssueToSprintTool,
 )
 
 
@@ -163,6 +167,101 @@ def test_jira_get_all_users():
         return False
 
 
+def test_jira_get_all_sprints():
+    """Test retrieving all sprints for a project."""
+    print("\n" + "="*60)
+    print("Testing JiraGetAllSprintsTool")
+    print("="*60)
+
+    tool = JiraGetAllSprintsTool()
+
+    # TODO: Replace with your test project key
+    project_key = "MH"  # Change this to a valid project key
+
+    print(f"\nGetting sprints for project: {project_key}")
+
+    try:
+        sprints = tool._run(project_key=project_key)
+        print(f"\nFound {len(sprints)} sprints across project boards")
+
+        print("\nSample sprints (first 5):")
+        for sprint_name, sprint_info in list(sprints.items())[:5]:
+            print(f"  {sprint_name}:")
+            print(f"    Sprint ID: {sprint_info.get('sprint_id')}")
+            print(f"    State: {sprint_info.get('state')}")
+            print(f"    Start: {sprint_info.get('start_date')}")
+            print(f"    End: {sprint_info.get('end_date')}")
+            print(f"    Issues: {len(sprint_info.get('issue_ids', []))}")
+
+        return True
+    except Exception as e:
+        print(f"\n[ERROR] Error getting sprints: {e}")
+        if hasattr(e, "response") and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
+
+def test_jira_get_sprint_issues():
+    """Test retrieving all issues within a sprint."""
+    print("\n" + "="*60)
+    print("Testing JiraGetSprintIssuesTool")
+    print("="*60)
+
+    tool = JiraGetSprintIssuesTool()
+
+    # TODO: Replace with a real sprint ID from your Jira.
+    sprint_id = 1
+
+    print(f"\nGetting issues for sprint ID: {sprint_id}")
+
+    try:
+        sprint_issues = tool._run(sprint_id=sprint_id)
+        issues = sprint_issues.get("issues", {})
+        print(f"\nFound {len(issues)} issues in sprint {sprint_id}")
+
+        print("\nSample issues (first 5):")
+        for issue_id, info in list(issues.items())[:5]:
+            print(f"  {issue_id} ({info.get('issue_key')} - {info.get('issue_type')}): {info.get('summary')}")
+            print(f"    Assignee ID: {info.get('assignee_id')}")
+            description = info.get('description', '')
+            print(f"    Description: {description[:100]}...")
+
+        return True
+    except Exception as e:
+        print(f"\n[ERROR] Error getting sprint issues: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
+
+def test_jira_move_issue_to_sprint():
+    """Test moving an issue into a sprint."""
+    print("\n" + "="*60)
+    print("Testing JiraMoveIssueToSprintTool")
+    print("="*60)
+
+    tool = JiraMoveIssueToSprintTool()
+
+    # TODO: Replace with a real sprint ID and issue key.
+    sprint_id = 1
+    issue_key = "MH-79"
+
+    print(f"\nMoving issue {issue_key} to sprint {sprint_id}")
+
+    try:
+        result = tool._run(sprint_id=sprint_id, issue_key=issue_key)
+        print("\n[OK] Issue moved successfully!")
+        print(f"Sprint ID: {result.get('sprint_id')}")
+        print(f"Issue Key: {result.get('issue_key')}")
+        print(f"Message: {result.get('message')}")
+        return True
+    except Exception as e:
+        print(f"\n[ERROR] Error moving issue to sprint: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
+
 def check_environment():
     """Check if environment variables are set."""
     import os
@@ -231,6 +330,43 @@ def test_jira_create_issue():
             print(f"Response: {e.response.text}")
         return False
 
+
+def test_jira_create_sprint():
+    """Test creating a Jira sprint."""
+    print("\n" + "="*60)
+    print("Testing JiraCreateSprintTool")
+    print("="*60)
+
+    tool = JiraCreateSprintTool()
+
+    project_key = "MH"
+    sprint_start_date = "2025-12-01"
+    sprint_end_date = "2025-12-14"
+    sprint_name = "Automation Test Sprint"
+
+    print(f"\nCreating sprint for project: {project_key}")
+    print(f"Sprint Start Date: {sprint_start_date}")
+    print(f"Sprint End Date: {sprint_end_date}")
+    print(f"Sprint Name: {sprint_name}")
+
+    try:
+        result = tool._run(
+            project_key=project_key,
+            sprint_start_date=sprint_start_date,
+            sprint_end_date=sprint_end_date,
+            sprint_name=sprint_name,
+        )
+        print("\n[OK] Sprint created successfully!")
+        print(f"Sprint ID: {result.get('sprint_id')}")
+        print(f"Board ID: {result.get('origin_board_id')}")
+        print(f"Board Name: {result.get('origin_board_name')}")
+        return True
+    except Exception as e:
+        print(f"\n[ERROR] Error creating sprint: {e}")
+        if hasattr(e, "response") and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
 def main():
     """Run all tests."""
     print("\n" + "="*60)
@@ -260,8 +396,20 @@ def main():
     # Test 4: Get All Users
     results.append(("Get All Users", test_jira_get_all_users()))
 
-    # Test 4: Create Issue
+    # Test 5: Get All Sprints
+    results.append(("Get All Sprints", test_jira_get_all_sprints()))
+    
+    # Test 6: Get Sprint Issues
+    results.append(("Get Sprint Issues", test_jira_get_sprint_issues()))
+
+    # Test 7: Move Issue to Sprint
+    results.append(("Move Issue to Sprint", test_jira_move_issue_to_sprint()))
+
+    # Test 8: Create Issue
     results.append(("Create Issue", test_jira_create_issue()))
+    
+    # Test 9: Create Sprint
+    results.append(("Create Sprint", test_jira_create_sprint()))
     
     # Summary
     print("\n" + "="*60)
