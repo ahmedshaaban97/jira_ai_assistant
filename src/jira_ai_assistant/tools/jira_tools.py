@@ -1371,6 +1371,65 @@ class JiraGetSprintIssuesTool(BaseTool):
         }
 
 
+class JiraMoveIssueToSprintToolInput(BaseModel):
+    """Input schema for JiraMoveIssueToSprintTool."""
+    sprint_id: int = Field(..., description="The numeric sprint ID to move the issue into.")
+    issue_key: str = Field(..., description="The Jira issue key (e.g., 'MH-12').")
+
+
+class JiraMoveIssueToSprintTool(BaseTool):
+    name: str = "jira_move_issue_to_sprint"
+    description: str = (
+        "Moves an issue (Task, Story, Bug, Sub-task, etc.) into the specified sprint. Provide the sprint_id "
+        "and issue_key. Returns confirmation with sprint and issue data."
+    )
+    args_schema: Type[BaseModel] = JiraMoveIssueToSprintToolInput
+
+    def _run(self, sprint_id: int, issue_key: str) -> Dict[str, Any]:
+        """
+        Adds the issue to the target sprint.
+
+        Args:
+            sprint_id: Target sprint identifier
+            issue_key: Issue key (e.g., 'PROJ-123')
+
+        Returns:
+            dict: Confirmation containing sprint_id, issue_key, and link to the Jira issue.
+        """
+        if not sprint_id:
+            raise ValueError("sprint_id is required to move an issue to a sprint.")
+        if not issue_key:
+            raise ValueError("issue_key is required to move an issue to a sprint.")
+
+        jira_url = JIRA_URL.rstrip('/')
+        auth = (EMAIL, API_KEY)
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+
+        endpoint = f"{jira_url}/rest/agile/1.0/sprint/{sprint_id}/issue"
+        payload = {
+            "issues": [issue_key]
+        }
+
+        response = requests.post(
+            endpoint,
+            json=payload,
+            headers=headers,
+            auth=auth
+        )
+        response.raise_for_status()
+
+        return {
+            "sprint_id": sprint_id,
+            "issue_key": issue_key,
+            "sprint_issue_api": endpoint,
+            "issue_url": f"{jira_url}/browse/{issue_key}",
+            "message": f"Issue {issue_key} moved to sprint {sprint_id}."
+        }
+
+
 # Tool: JiraUpdateIssueTool
 class JiraUpdateIssueToolInput(BaseModel):
     """Input schema for JiraUpdateIssueTool."""

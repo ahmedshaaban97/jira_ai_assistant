@@ -34,6 +34,7 @@ from jira_ai_assistant.tools.jira_tools import (
     JiraCreateSprintTool,
     JiraGetAllSprintsTool,
     JiraGetSprintIssuesTool,
+    JiraMoveIssueToSprintTool,
 )
 
 
@@ -233,6 +234,34 @@ def test_jira_get_sprint_issues():
         return False
 
 
+def test_jira_move_issue_to_sprint():
+    """Test moving an issue into a sprint."""
+    print("\n" + "="*60)
+    print("Testing JiraMoveIssueToSprintTool")
+    print("="*60)
+
+    tool = JiraMoveIssueToSprintTool()
+
+    # TODO: Replace with a real sprint ID and issue key.
+    sprint_id = 1
+    issue_key = "MH-79"
+
+    print(f"\nMoving issue {issue_key} to sprint {sprint_id}")
+
+    try:
+        result = tool._run(sprint_id=sprint_id, issue_key=issue_key)
+        print("\n[OK] Issue moved successfully!")
+        print(f"Sprint ID: {result.get('sprint_id')}")
+        print(f"Issue Key: {result.get('issue_key')}")
+        print(f"Message: {result.get('message')}")
+        return True
+    except Exception as e:
+        print(f"\n[ERROR] Error moving issue to sprint: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
+
 def check_environment():
     """Check if environment variables are set."""
     import os
@@ -373,10 +402,13 @@ def main():
     # Test 6: Get Sprint Issues
     results.append(("Get Sprint Issues", test_jira_get_sprint_issues()))
 
-    # Test 7: Create Issue
+    # Test 7: Move Issue to Sprint
+    results.append(("Move Issue to Sprint", test_jira_move_issue_to_sprint()))
+
+    # Test 8: Create Issue
     results.append(("Create Issue", test_jira_create_issue()))
     
-    # Test 8: Create Sprint
+    # Test 9: Create Sprint
     results.append(("Create Sprint", test_jira_create_sprint()))
     
     # Summary
