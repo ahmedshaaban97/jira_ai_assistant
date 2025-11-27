@@ -127,3 +127,82 @@ execute_epic_backlog:
     and be valid JSON without trailing commas.
   agent: product_manager
   output_file: output/execute_epic_backlog.md
+
+follow_up_sprint_tasks:
+  description: >
+    Review all active sprint tasks in project {project_key} and write
+    gentle, professional follow-up comments to developers. For each task,
+    analyze its current status, due date, assignee, and existing comments
+    to craft a personalized follow-up that:
+      - Reminds about the due date (days remaining or overdue)
+      - Requests a brief status update
+      - Asks specific questions based on task state and context
+      - Offers support and asks about blockers
+      - Maintains a supportive, non-accusatory tone
+    
+    Workflow:
+      1. Use jira_get_all_sprints to discover all active sprints in
+         project {project_key}. Filter for sprints with state="active".
+      2. For each active sprint, use jira_get_sprint_issues to get all
+         issues currently in that sprint.
+      3. For each issue, use jira_get_issue_details to get comprehensive
+         information including status, assignee, due date, comments, and
+         last update time.
+      4. Analyze each task:
+         - Calculate days until due date (or days overdue)
+         - Assess urgency based on time remaining and current status
+         - Review existing comments to understand context
+         - Identify specific concerns (overdue, stale, blocked, etc.)
+      5. CRITICAL: You MUST use the jira_add_comment tool to actually write
+         a follow-up comment for EACH active sprint task. Do not just plan or
+         describe what comment to write - you must CALL the tool with:
+         - issue_key: the Jira issue key (e.g., "MH-205")
+         - body: the full comment text to add
+         Personalize each comment based on:
+         - Task status (To Do, In Progress, In Review, etc.)
+         - Start date
+         - Due date proximity (overdue, due soon, on schedule)
+         - Recent activity (last update, recent comments)
+         - Complexity indicators (story points, subtasks)
+         
+         IMPORTANT: Only set "comment_added": true in your output if the
+         jira_add_comment tool call returned successfully. If the tool was
+         not called or failed, set "comment_added": false and explain why.
+      
+    Comment Guidelines:
+      - Start with a friendly greeting
+      - Reference the specific due date and time remaining
+      - Ask targeted questions based on task state:
+        * "To Do" tasks: Has work started? Any blockers?
+        * "In Progress" tasks: On track for completion? Any challenges?
+        * Overdue tasks: What's preventing completion? Need assistance?
+        * Stale tasks: Still relevant? Need clarification?
+      - Offer concrete support
+      - Keep tone supportive and collaborative, not demanding
+      - Be concise—respect developer time
+  expected_output: >
+    A JSON object summarizing the follow-up actions:
+      - "project_key": the project key reviewed.
+      - "sprints_reviewed": array of objects with:
+          - "sprint_id": the sprint ID.
+          - "sprint_name": the sprint name.
+          - "sprint_state": the sprint state (should be "active").
+          - "task_count": number of tasks in this sprint.
+      - "tasks_followed_up": array of objects with:
+          - "issue_key": the Jira issue key.
+          - "summary": the issue summary/title.
+          - "status": current issue status.
+          - "assignee": assignee display name or account ID.
+          - "due_date": due date in YYYY-MM-DD format or null.
+          - "days_until_due": integer (negative if overdue, null if no due date).
+          - "comment_added": boolean - MUST be true ONLY if jira_add_comment
+            tool was actually called and returned successfully. Set to false
+            if tool was not called or failed.
+          - "comment_summary": brief summary of the actual comment that was
+            added via the jira_add_comment tool (null if no comment added).
+      - "summary": plain-text overall summary of follow-up actions,
+        including total tasks reviewed, comments added, and any critical
+        concerns observed (e.g., multiple overdue tasks, blocked work).
+    This JSON must be valid with no trailing commas.
+  agent: follow_up_agent
+  output_file: output/follow_up_sprint_tasks.md
