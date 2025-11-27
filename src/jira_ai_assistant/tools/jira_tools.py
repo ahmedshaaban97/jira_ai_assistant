@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import Any, Dict, Type
 
 import requests
@@ -963,6 +964,140 @@ class JiraCreateIssueTool(BaseTool):
         return {
             "issue_key": response_data.get("key"),
             "issue_id": response_data.get("id")
+        }
+
+
+class JiraCreateSprintToolInput(BaseModel):
+    """Input schema for JiraCreateSprintTool."""
+    project_key: str = Field(..., description="The Jira project key as a string (e.g., 'MH').")
+    sprint_start_date: str = Field(..., description="Sprint start date in YYYY-MM-DD format (e.g., '2025-12-01').")
+    sprint_end_date: str = Field(..., description="Sprint end date in YYYY-MM-DD format (e.g., '2025-12-14').")
+    sprint_name: str = Field("", description="Optional sprint name. Defaults to '<PROJECT> Sprint <start_date>'.")
+
+
+class JiraCreateSprintTool(BaseTool):
+    name: str = "jira_create_sprint"
+    description: str = (
+        "Creates a new sprint for the given project on its Scrum board. Provide the project key and sprint "
+        "start/end dates (YYYY-MM-DD). Returns metadata for the newly created sprint."
+    )
+    args_schema: Type[BaseModel] = JiraCreateSprintToolInput
+
+    @staticmethod
+    def _format_sprint_datetime(date_str: str) -> datetime:
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError as exc:
+            raise ValueError("Sprint dates must use YYYY-MM-DD format.") from exc
+
+    def _run(
+        self,
+        project_key: str,
+        sprint_start_date: str,
+        sprint_end_date: str,
+        sprint_name: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Creates a new sprint for the first scrum board tied to the provided project key.
+
+        Args:
+            project_key: The Jira project key (e.g., 'PROJ')
+            sprint_start_date: Sprint start date (YYYY-MM-DD)
+            sprint_end_date: Sprint end date (YYYY-MM-DD)
+            sprint_name: Optional sprint name
+
+        Returns:
+            dict: Dictionary containing sprint metadata including sprint_id, sprint_name,
+                  project_key, sprint_start_date, sprint_end_date, and board info.
+
+        Raises:
+            ValueError: If no boards exist for the project or the date format is invalid.
+            requests.exceptions.RequestException: If the API request fails.
+        """
+        jira_url = JIRA_URL.rstrip('/')
+        auth = (EMAIL, API_KEY)
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+
+        start_dt = self._format_sprint_datetime(sprint_start_date)
+        end_dt = self._format_sprint_datetime(sprint_end_date)
+
+        if end_dt <= start_dt:
+            raise ValueError("sprint_end_date must be after sprint_start_date.")
+
+        start_iso = start_dt.strftime("%Y-%m-%dT%H:%M:%S.000+0000")
+        end_iso = end_dt.strftime("%Y-%m-%dT%H:%M:%S.000+0000")
+
+        # Discover available boards for the project
+        board_endpoint = f"{jira_url}/rest/agile/1.0/board"
+        max_results = 50
+        start_at = 0
+        boards = []
+
+        while True:
+            params = {
+                "projectKeyOrId": project_key,
+                "startAt": start_at,
+                "maxResults": max_results
+            }
+            board_response = requests.get(
+                board_endpoint,
+                params=params,
+                headers=headers,
+                auth=auth
+            )
+            board_response.raise_for_status()
+            board_data = board_response.json()
+            values = board_data.get("values", [])
+            boards.extend(values)
+
+            if board_data.get("isLast") is True or len(values) < max_results:
+                break
+            start_at += max_results
+
+        if not boards:
+            raise ValueError(f"No boards found for project '{project_key}'.")
+
+        # Prefer scrum boards, otherwise fall back to the first available board
+        selected_board = next(
+            (board for board in boards if (board.get("type") or "").lower() == "scrum"),
+            boards[0]
+        )
+        board_id = selected_board.get("id")
+        if board_id is None:
+            raise ValueError(f"Could not determine a valid board ID for project '{project_key}'.")
+
+        resolved_name = sprint_name.strip() or f"{project_key.upper()} Sprint {start_dt.strftime('%Y-%m-%d')}"
+
+        payload = {
+            "name": resolved_name,
+            "startDate": start_iso,
+            "endDate": end_iso,
+            "originBoardId": board_id
+        }
+
+        create_endpoint = f"{jira_url}/rest/agile/1.0/sprint"
+        response = requests.post(
+            create_endpoint,
+            json=payload,
+            headers=headers,
+            auth=auth
+        )
+        response.raise_for_status()
+        sprint_info = response.json()
+
+        return {
+            "sprint_id": sprint_info.get("id"),
+            "sprint_name": sprint_info.get("name"),
+            "project_key": project_key,
+            "sprint_start_date": sprint_start_date,
+            "sprint_end_date": sprint_end_date,
+            "state": sprint_info.get("state"),
+            "origin_board_id": sprint_info.get("originBoardId"),
+            "origin_board_name": selected_board.get("name"),
+            "self_url": sprint_info.get("self")
         }
 
 

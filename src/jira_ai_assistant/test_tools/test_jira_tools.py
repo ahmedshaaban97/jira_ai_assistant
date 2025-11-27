@@ -31,6 +31,7 @@ from jira_ai_assistant.tools.jira_tools import (
     JiraGetAllUsersTool,
     JiraGetUserHistoryTool,
     JiraCreateIssueTool,
+    JiraCreateSprintTool,
 )
 
 
@@ -231,6 +232,43 @@ def test_jira_create_issue():
             print(f"Response: {e.response.text}")
         return False
 
+
+def test_jira_create_sprint():
+    """Test creating a Jira sprint."""
+    print("\n" + "="*60)
+    print("Testing JiraCreateSprintTool")
+    print("="*60)
+
+    tool = JiraCreateSprintTool()
+
+    project_key = "MH"
+    sprint_start_date = "2025-12-01"
+    sprint_end_date = "2025-12-14"
+    sprint_name = "Automation Test Sprint"
+
+    print(f"\nCreating sprint for project: {project_key}")
+    print(f"Sprint Start Date: {sprint_start_date}")
+    print(f"Sprint End Date: {sprint_end_date}")
+    print(f"Sprint Name: {sprint_name}")
+
+    try:
+        result = tool._run(
+            project_key=project_key,
+            sprint_start_date=sprint_start_date,
+            sprint_end_date=sprint_end_date,
+            sprint_name=sprint_name,
+        )
+        print("\n[OK] Sprint created successfully!")
+        print(f"Sprint ID: {result.get('sprint_id')}")
+        print(f"Board ID: {result.get('origin_board_id')}")
+        print(f"Board Name: {result.get('origin_board_name')}")
+        return True
+    except Exception as e:
+        print(f"\n[ERROR] Error creating sprint: {e}")
+        if hasattr(e, "response") and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
 def main():
     """Run all tests."""
     print("\n" + "="*60)
@@ -260,8 +298,11 @@ def main():
     # Test 4: Get All Users
     results.append(("Get All Users", test_jira_get_all_users()))
 
-    # Test 4: Create Issue
+    # Test 5: Create Issue
     results.append(("Create Issue", test_jira_create_issue()))
+    
+    # Test 6: Create Sprint
+    results.append(("Create Sprint", test_jira_create_sprint()))
     
     # Summary
     print("\n" + "="*60)
