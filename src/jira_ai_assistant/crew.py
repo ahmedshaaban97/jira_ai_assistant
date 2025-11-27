@@ -71,12 +71,20 @@ class JiraAiAssistant():
     @crew
     def crew(self) -> Crew:
         """Creates the JiraAiAssistant crew"""
-        
+        # Guardrail / manager agent that oversees planning and execution.
+        # It does not call Jira tools directly; it acts as a professional
+        # product-management reviewer that enforces planning guardrails.
+        guardrail_agent = Agent(
+            config=self.agents_config['planning_guardrail'],  # type: ignore[index]
+            verbose=True,
+        )
 
         return Crew(
-            agents=self.agents, # Automatically created by the @agent decorator
-            tasks=self.tasks, # Automatically created by the @task decorator
-            process=Process.sequential,
+            # Product planner agent(s); guardrail agent is passed separately
+            # as the hierarchical manager and must not be part of this list.
+            agents=self.agents,  # Automatically created by the @agent decorator
+            tasks=self.tasks,  # Automatically created by the @task decorator
+            process=Process.hierarchical,
+            manager_agent=guardrail_agent,
             verbose=True,
-            # process=Process.hierarchical, # In case you wanna use that instead https://docs.crewai.com/how-to/Hierarchical/
         )

@@ -979,7 +979,9 @@ class JiraCreateSprintTool(BaseTool):
     name: str = "jira_create_sprint"
     description: str = (
         "Creates a new sprint for the given project on its Scrum board. Provide the project key and sprint "
-        "start/end dates (YYYY-MM-DD). Returns metadata for the newly created sprint."
+        "start/end dates (YYYY-MM-DD). Returns metadata for the newly created sprint. Use this together with "
+        "jira_move_issue_to_sprint to ensure that every created Story, Task, Bug, and Sub-task is assigned to a "
+        "concrete sprint instead of remaining in the generic backlog."
     )
     args_schema: Type[BaseModel] = JiraCreateSprintToolInput
 
@@ -1110,7 +1112,8 @@ class JiraGetAllSprintsTool(BaseTool):
     name: str = "jira_get_all_sprints"
     description: str = (
         "Lists every sprint linked to the project's boards. Returns a dict keyed by sprint name with start/end dates, "
-        "state, board metadata, and the IDs/keys for all issues assigned to that sprint."
+        "state, board metadata, and the IDs/keys for all issues assigned to that sprint. Use this to choose an "
+        "appropriate sprint for each epic-related issue so that nothing stays unscheduled in the backlog."
     )
     args_schema: Type[BaseModel] = JiraGetAllSprintsToolInput
 
@@ -1381,7 +1384,8 @@ class JiraMoveIssueToSprintTool(BaseTool):
     name: str = "jira_move_issue_to_sprint"
     description: str = (
         "Moves an issue (Task, Story, Bug, Sub-task, etc.) into the specified sprint. Provide the sprint_id "
-        "and issue_key. Returns confirmation with sprint and issue data."
+        "and issue_key. Returns confirmation with sprint and issue data. Call this for every Story, Task, Bug, "
+        "and Sub-task created for the epic so that no issue is left in the generic backlog without a sprint."
     )
     args_schema: Type[BaseModel] = JiraMoveIssueToSprintToolInput
 
