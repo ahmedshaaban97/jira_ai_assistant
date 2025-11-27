@@ -1297,7 +1297,7 @@ class JiraGetSprintIssuesTool(BaseTool):
         }
 
         endpoint = f"{jira_url}/rest/agile/1.0/sprint/{sprint_id}/issue"
-        issue_details = []
+        issue_map: Dict[str, Dict[str, Any]] = {}
         issue_keys = []
         issue_ids = []
 
@@ -1308,7 +1308,7 @@ class JiraGetSprintIssuesTool(BaseTool):
             params = {
                 "startAt": start_at,
                 "maxResults": max_results,
-                "fields": "summary,description,issuetype,status"
+                "fields": "summary,description,issuetype,status,assignee"
             }
             response = requests.get(
                 endpoint,
@@ -1332,18 +1332,24 @@ class JiraGetSprintIssuesTool(BaseTool):
                 else:
                     description = str(description_field)
 
+                assignee_id = None
+                assignee = fields.get("assignee")
+                if assignee:
+                    assignee_id = assignee.get("accountId")
+
                 issue_info = {
-                    "issue_id": issue_id,
                     "issue_key": issue_key,
                     "summary": fields.get("summary", ""),
                     "description": description,
                     "issue_type": fields.get("issuetype", {}).get("name", "Unknown"),
-                    "status": fields.get("status", {}).get("name", "Unknown")
+                    "status": fields.get("status", {}).get("name", "Unknown"),
+                    "assignee_id": assignee_id
                 }
 
-                issue_details.append(issue_info)
-                if issue_id:
-                    issue_ids.append(issue_id)
+                unique_id = issue_id or issue_key or f"issue_{len(issue_map) + 1}"
+                issue_map[unique_id] = issue_info
+                if unique_id:
+                    issue_ids.append(unique_id)
                 if issue_key:
                     issue_keys.append(issue_key)
 
@@ -1358,10 +1364,10 @@ class JiraGetSprintIssuesTool(BaseTool):
 
         return {
             "sprint_id": sprint_id,
-            "issues_count": len(issue_details),
+            "issues_count": len(issue_map),
             "issue_ids": issue_ids,
             "issue_keys": issue_keys,
-            "issues": issue_details
+            "issues": issue_map
         }
 
 

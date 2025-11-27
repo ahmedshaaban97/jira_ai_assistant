@@ -215,13 +215,15 @@ def test_jira_get_sprint_issues():
 
     try:
         sprint_issues = tool._run(sprint_id=sprint_id)
-        issues = sprint_issues.get("issues", [])
+        issues = sprint_issues.get("issues", {})
         print(f"\nFound {len(issues)} issues in sprint {sprint_id}")
 
         print("\nSample issues (first 5):")
-        for issue in issues[:5]:
-            print(f"  {issue.get('issue_key')} ({issue.get('issue_type')}): {issue.get('summary')}")
-            print(f"    Description: {issue.get('description')[:100]}...")
+        for issue_id, info in list(issues.items())[:5]:
+            print(f"  {issue_id} ({info.get('issue_key')} - {info.get('issue_type')}): {info.get('summary')}")
+            print(f"    Assignee ID: {info.get('assignee_id')}")
+            description = info.get('description', '')
+            print(f"    Description: {description[:100]}...")
 
         return True
     except Exception as e:
@@ -371,11 +373,11 @@ def main():
     # Test 6: Get Sprint Issues
     results.append(("Get Sprint Issues", test_jira_get_sprint_issues()))
 
-    # # Test 7: Create Issue
-    # results.append(("Create Issue", test_jira_create_issue()))
+    # Test 7: Create Issue
+    results.append(("Create Issue", test_jira_create_issue()))
     
-    # # Test 8: Create Sprint
-    # results.append(("Create Sprint", test_jira_create_sprint()))
+    # Test 8: Create Sprint
+    results.append(("Create Sprint", test_jira_create_sprint()))
     
     # Summary
     print("\n" + "="*60)
