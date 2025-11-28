@@ -42,10 +42,8 @@ Rendered PNGs (ready for docs, slides, or wikis) are already included:
 
 You can embed them directly in documentation:
 
-```markdown
 ![System Overview](system_architecture/system_overview.png)
 ![Agent Flow](system_architecture/agent_flow.png)
-```
 
 ---
 
