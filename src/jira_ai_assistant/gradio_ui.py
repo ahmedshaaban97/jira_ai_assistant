@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import gradio as gr
+from .main import run
 
 from jira_ai_assistant.crew import JiraAiAssistant
 from jira_ai_assistant.tools.jira_tools import (
@@ -124,14 +125,13 @@ def _merge_inputs(project_key: str, epic_key: str, extra_inputs: str) -> Dict[st
     return base_inputs
 
 
-def kickoff_assistant(project_key: str, epic_key: str, extra_inputs: str) -> tuple[str, str, str, str]:
+def kickoff_assistant(project_key: str, epic_key: str, mode: str, extra_inputs: str = "") -> tuple[str, str, str, str]:
     """Trigger the crew run and surface status plus latest markdown outputs."""
     inputs = _merge_inputs(project_key, epic_key, extra_inputs)
-    crew = JiraAiAssistant().crew()
-
+    inputs["user_msg"] = mode
     start_time = time.time()
     try:
-        result = crew.kickoff(inputs=inputs)
+        result = run(inputs=inputs)
     except Exception as exc:  # pragma: no cover - exercised via UI
         raise gr.Error(f"Failed to run the crew: {exc}") from exc
     elapsed = time.time() - start_time
@@ -224,6 +224,12 @@ def build_interface() -> gr.Blocks:
             with gr.Row():
                 project_key_box = gr.Textbox(label="Project Key", placeholder="e.g. MH", autofocus=True)
                 epic_key_box = gr.Textbox(label="Epic Key", placeholder="e.g. MH-3")
+                mode_dropdown = gr.Dropdown(
+                    label="Mode",
+                    choices=["plan-epic", "follow-up"],
+                    value="plan-epic",
+                    interactive=True
+                )
             run_button = gr.Button("Run Your AI JIRA Assistant!", variant="primary")
             run_status = gr.Textbox(label="Status", interactive=False)
             gr.Markdown("### Crew Result")
@@ -235,7 +241,7 @@ def build_interface() -> gr.Blocks:
 
             run_button.click(
                 kickoff_assistant,
-                inputs=[project_key_box, epic_key_box],
+                inputs=[project_key_box, epic_key_box, mode_dropdown],
                 outputs=[run_status, result_display, plan_display, exec_display],
                 queue=True,
             )

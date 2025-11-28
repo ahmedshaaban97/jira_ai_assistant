@@ -56,16 +56,23 @@ def route_workflow(user_msg, epic_key=""):
         return "follow_up"
 
 
-def run():
+def run(inputs={}):
     """
     Run the crew with routing logic based on user_msg.
     """
+    # print(f"Inputs: {inputs}")
+    # return
     # Example inputs - modify these as needed
-    inputs = {
-        'project_key': 'MH',
-        'epic_key': 'MH-6',
-        'user_msg': 'backlog',  # User's natural language message
-    }
+    # inputs = {
+    #     'project_key': 'MH',
+    #     'epic_key': 'MH-6',
+    #     'user_msg': 'backlog',  # User's natural language message
+    # }
+    if not inputs:
+        print("No inputs provided")
+        return
+    else:
+        print(f"Inputs: {inputs}")
 
     try:
         crew_instance = JiraAiAssistant()
@@ -139,7 +146,8 @@ def run():
             print("RUNNING DEFAULT BACKLOG WORKFLOW (No routing)")
             print(f"{'='*60}\n")
             
-            crew_instance.crew().kickoff(inputs=inputs)
+            result = crew_instance.crew().kickoff(inputs=inputs)
+        return result
             
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
