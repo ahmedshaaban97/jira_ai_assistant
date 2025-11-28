@@ -7,6 +7,7 @@ requires-python = ">=3.10,<3.14"
 dependencies = [
     "crewai[tools]==1.5.0",
     "pydantic>=2.10.6",
+    "gradio>=6.0.0,<7.0.0",
 ]
 
 [project.scripts]
@@ -16,6 +17,7 @@ train = "jira_ai_assistant.main:train"
 replay = "jira_ai_assistant.main:replay"
 test = "jira_ai_assistant.main:test"
 run_with_trigger = "jira_ai_assistant.main:run_with_trigger"
+jira_ai_assistant_ui = "jira_ai_assistant.gradio_ui:launch"
 
 [build-system]
 requires = ["hatchling"]
