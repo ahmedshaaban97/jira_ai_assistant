@@ -124,3 +124,35 @@ class ExecuteEpicBacklogOutput(BaseModel):
     comments_added: List[CommentAdded] = Field(default_factory=list, description="Array of comments added to issues")
     capacity_notes: str = Field(..., description="Plain-text explanation of capacity and availability considerations")
 
+
+# ============================================================================
+# Follow-up Sprint Tasks Output Models
+# ============================================================================
+
+class SprintReviewed(BaseModel):
+    """Model for a reviewed sprint."""
+    sprint_id: int = Field(..., description="The sprint ID")
+    sprint_name: str = Field(..., description="The sprint name")
+    sprint_state: str = Field(..., description="The sprint state (should be 'active')")
+    task_count: int = Field(..., description="Number of tasks in this sprint")
+
+
+class TaskFollowedUp(BaseModel):
+    """Model for a task that received a follow-up comment."""
+    issue_key: str = Field(..., description="The Jira issue key")
+    summary: str = Field(..., description="The issue summary/title")
+    status: str = Field(..., description="Current issue status")
+    assignee: Optional[str] = Field(None, description="Assignee display name or account ID")
+    due_date: Optional[str] = Field(None, description="Due date in YYYY-MM-DD format or null")
+    days_until_due: Optional[int] = Field(None, description="Days until due (negative if overdue, null if no due date)")
+    comment_added: bool = Field(..., description="Whether comment was successfully added")
+    comment_summary: Optional[str] = Field(None, description="Brief summary of the comment content (null if comment was not added)")
+
+
+class FollowUpSprintTasksOutput(BaseModel):
+    """Output model for follow_up_sprint_tasks task."""
+    project_key: str = Field(..., description="The project key reviewed")
+    sprints_reviewed: List[SprintReviewed] = Field(default_factory=list, description="Array of sprints reviewed")
+    tasks_followed_up: List[TaskFollowedUp] = Field(default_factory=list, description="Array of tasks that received follow-up comments")
+    summary: str = Field(..., description="Overall summary of follow-up actions and observations")
+

@@ -19,7 +19,11 @@ from .tools.jira_tools import (
     JiraGetSprintIssuesTool,
     JiraMoveIssueToSprintTool,
 )
-from .outputs import PlanEpicBacklogOutput, ExecuteEpicBacklogOutput
+from .outputs import (
+    PlanEpicBacklogOutput,
+    ExecuteEpicBacklogOutput,
+    FollowUpSprintTasksOutput,
+)
 
 
 
@@ -53,6 +57,20 @@ class JiraAiAssistant():
             ],
         )
 
+    @agent
+    def follow_up_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['follow_up_agent'], # type: ignore[index]
+            verbose=True,
+            tools=[
+                JiraGetAllSprintsTool(),
+                JiraGetSprintIssuesTool(),
+                JiraGetIssueDetailsTool(),
+                JiraAddCommentTool(),
+                JiraGetAllUsersTool(),
+            ],
+        )
+
     @task
     def plan_epic_backlog(self) -> Task:
         return Task(
@@ -65,6 +83,13 @@ class JiraAiAssistant():
         return Task(
             config=self.tasks_config['execute_epic_backlog'], # type: ignore[index]
             output_pydantic=ExecuteEpicBacklogOutput,
+        )
+
+    @task
+    def follow_up_sprint_tasks(self) -> Task:
+        return Task(
+            config=self.tasks_config['follow_up_sprint_tasks'], # type: ignore[index]
+            output_pydantic=FollowUpSprintTasksOutput,
         )
 
 

@@ -30,6 +30,7 @@ from jira_ai_assistant.tools.jira_tools import (
     JiraAssignIssueTool,
     JiraGetAllUsersTool,
     JiraGetUserHistoryTool,
+    JiraGetIssueDetailsTool,
     JiraCreateIssueTool,
     JiraCreateSprintTool,
     JiraGetAllSprintsTool,
@@ -128,6 +129,108 @@ def test_jira_get_user_history():
         return True
     except Exception as e:
         print(f"\n✗ Error getting user history: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
+
+
+def test_jira_get_issue_details():
+    """Test getting detailed information about a specific Jira issue."""
+    print("\n" + "="*60)
+    print("Testing JiraGetIssueDetailsTool")
+    print("="*60)
+    
+    tool = JiraGetIssueDetailsTool()
+    
+    # TODO: Replace with your test issue key
+    issue_key = "MH-205"  # Change this to a valid issue key in your Jira instance
+    
+    print(f"\nGetting details for issue: {issue_key}")
+    
+    try:
+        issue_details = tool._run(issue_key=issue_key)
+        print(f"\n✓ Successfully retrieved issue details!")
+        
+        # Display key information
+        print(f"\nIssue Key: {issue_details.get('issue_key')}")
+        print(f"Issue ID: {issue_details.get('issue_id')}")
+        print(f"Summary: {issue_details.get('summary')}")
+        print(f"Issue Type: {issue_details.get('issue_type')}")
+        print(f"Status: {issue_details.get('status')}")
+        print(f"Priority: {issue_details.get('priority')}")
+        print(f"Created: {issue_details.get('created')}")
+        print(f"Updated: {issue_details.get('updated')}")
+        
+        # Assignee info
+        assignee = issue_details.get('assignee')
+        if assignee:
+            print(f"\nAssignee:")
+            print(f"  Display Name: {assignee.get('display_name')}")
+            print(f"  Account ID: {assignee.get('account_id')}")
+            print(f"  Email: {assignee.get('email')}")
+        else:
+            print(f"\nAssignee: Unassigned")
+        
+        # Reporter info
+        reporter = issue_details.get('reporter')
+        if reporter:
+            print(f"\nReporter:")
+            print(f"  Display Name: {reporter.get('display_name')}")
+            print(f"  Account ID: {reporter.get('account_id')}")
+        
+        # Dates
+        print(f"\nDates:")
+        print(f"  Start Date: {issue_details.get('start_date')}")
+        print(f"  Due Date: {issue_details.get('due_date')}")
+        
+        # Description (truncated)
+        description = issue_details.get('description', '')
+        if description:
+            print(f"\nDescription: {description[:150]}...")
+        else:
+            print(f"\nDescription: (empty)")
+        
+        # Epic info
+        epic_key = issue_details.get('epic_key')
+        epic_name = issue_details.get('epic_name')
+        if epic_key:
+            print(f"\nEpic: {epic_name} ({epic_key})")
+        
+        # Parent info
+        parent_key = issue_details.get('parent_key')
+        if parent_key:
+            print(f"Parent: {parent_key}")
+        
+        # Labels and components
+        labels = issue_details.get('labels', [])
+        components = issue_details.get('components', [])
+        if labels:
+            print(f"\nLabels: {', '.join(labels)}")
+        if components:
+            print(f"Components: {', '.join(components)}")
+        
+        # Comments
+        comments = issue_details.get('comments', [])
+        if comments:
+            print(f"\nComments ({len(comments)}):")
+            for i, comment in enumerate(comments[:3], 1):  # Show first 3 comments
+                author = comment.get('author', {})
+                print(f"  {i}. By {author.get('display_name')} on {comment.get('created')}")
+                body = comment.get('body', '')
+                print(f"     {body[:80]}...")
+            if len(comments) > 3:
+                print(f"  ... and {len(comments) - 3} more comments")
+        else:
+            print(f"\nComments: None")
+        
+        # Story points
+        story_points = issue_details.get('story_points')
+        if story_points:
+            print(f"\nStory Points: {story_points}")
+        
+        return True
+    except Exception as e:
+        print(f"\n✗ Error getting issue details: {e}")
         if hasattr(e, 'response') and e.response is not None:
             print(f"Response: {e.response.text}")
         return False
@@ -393,22 +496,25 @@ def main():
     # Test 3: Get User History
     results.append(("Get User History", test_jira_get_user_history()))
 
-    # Test 4: Get All Users
+    # Test 4: Get Issue Details
+    results.append(("Get Issue Details", test_jira_get_issue_details()))
+
+    # Test 5: Get All Users
     results.append(("Get All Users", test_jira_get_all_users()))
 
-    # Test 5: Get All Sprints
+    # Test 6: Get All Sprints
     results.append(("Get All Sprints", test_jira_get_all_sprints()))
     
-    # Test 6: Get Sprint Issues
+    # Test 7: Get Sprint Issues
     results.append(("Get Sprint Issues", test_jira_get_sprint_issues()))
 
-    # Test 7: Move Issue to Sprint
+    # Test 8: Move Issue to Sprint
     results.append(("Move Issue to Sprint", test_jira_move_issue_to_sprint()))
 
-    # Test 8: Create Issue
+    # Test 9: Create Issue
     results.append(("Create Issue", test_jira_create_issue()))
     
-    # Test 9: Create Sprint
+    # Test 10: Create Sprint
     results.append(("Create Sprint", test_jira_create_sprint()))
     
     # Summary
