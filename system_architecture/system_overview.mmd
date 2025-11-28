@@ -1,0 +1,164 @@
+flowchart TB
+
+%% =======================
+%% FRONTEND UI LAYER
+%% =======================
+subgraph FRONTEND["Frontend UI Layer"]
+  GradioUI["Gradio 6 UI
+- File: src/jira_ai_assistant/gradio_ui.py
+- Tabs:
+  * Run Assistant
+  * Outputs Overview
+  * Jira Utilities
+- Launches CrewAI run and exposes tools
+"]
+end
+
+%% =======================
+%% APPLICATION / CREW LAYER
+%% =======================
+subgraph APP_LAYER["Application & CrewAI Layer"]
+
+  MainEntry["CLI Entrypoint
+- File: src/jira_ai_assistant/main.py
+- Loads .env (JIRA_URL, EMAIL, API_KEY, etc.)
+- Calls JiraAiAssistant().crew().kickoff(...)
+"]
+
+  CrewDef["JiraAiAssistant Crew
+- File: src/jira_ai_assistant/crew.py
+- Framework: CrewAI (hierarchical process)
+- Uses config:
+  * config/agents.yaml
+  * config/tasks.yaml
+- Output models: outputs.py
+"]
+
+  ProductAgent["Product Manager Agent
+- Config key: product_manager
+- LLM: gpt-4o-mini
+- Tools:
+  * PdfFileRetriever
+  * Jira* tools (read/write)
+- Tasks:
+  * plan_epic_backlog
+  * execute_epic_backlog
+"]
+
+  GuardrailAgent["Planning Guardrail Manager Agent
+- Config key: planning_guardrail
+- Acts as CrewAI manager_agent
+- Reviews backlog plan & execution
+- Enforces planning guardrails & risk checks
+"]
+
+end
+
+%% =======================
+%% TOOLING LAYER
+%% =======================
+subgraph TOOLING["Tooling & Integration Layer"]
+
+  CVTool["PdfFileRetriever
+- File: src/jira_ai_assistant/tools/files_retrieval_tools.py
+- Reads PDF resumes from resume_documents/
+- Returns structured documents for LLM
+"]
+
+  JiraTools["Jira Tools
+- File: src/jira_ai_assistant/tools/jira_tools.py
+- Implements:
+  * jira_get_all_epics
+  * jira_get_issue_details
+  * jira_get_all_issues_with_details
+  * jira_get_all_users
+  * jira_get_user_history
+  * jira_get_all_sprints
+  * jira_get_sprint_issues
+  * jira_create_issue
+  * jira_update_issue
+  * jira_assign_issue
+  * jira_add_comment
+  * jira_create_sprint
+  * jira_move_issue_to_sprint
+- Uses requests + Jira REST API
+"]
+
+end
+
+%% =======================
+%% DATA / ARTIFACTS LAYER
+%% =======================
+subgraph DATA["Local Data & Artifacts"]
+
+  ConfigFiles["Crew Configuration
+- src/jira_ai_assistant/config/agents.yaml
+- src/jira_ai_assistant/config/tasks.yaml
+"]
+
+  ResumeDocs["Resume Documents
+- Directory:
+  src/jira_ai_assistant/resume_documents/
+- Team CV PDFs
+"]
+
+  OutputFiles["Backlog Artifacts
+- Directory: /output
+- plan_epic_backlog.md
+- execute_epic_backlog.md
+- Markdown with structured JSON content
+"]
+
+  EnvFile["Environment Variables
+- .env / env-template at repo root
+- JIRA_URL, EMAIL, API_KEY, etc.
+"]
+
+end
+
+%% =======================
+%% EXTERNAL SYSTEMS
+%% =======================
+subgraph EXTERNAL["External Systems"]
+
+  JiraCloud["Jira Cloud / Server
+- REST API v3/v2
+- Projects, epics, issues, sprints, comments, users
+"]
+
+end
+
+%% =======================
+%% CONNECTIONS
+%% =======================
+
+%% UI entrypoints
+GradioUI -->|"Run Assistant tab
+Kickoff crew with project_key, epic_key, extra JSON"| CrewDef
+MainEntry -->|"Direct kickoff (local CLI run)"| CrewDef
+
+%% Crew internal wiring
+CrewDef -->|"Hierarchical process manager_agent"| GuardrailAgent
+CrewDef -->|"Executes tasks with tools"| ProductAgent
+
+%% Agent -> tools
+ProductAgent -->|"CV loading & skills extraction"| CVTool
+ProductAgent -->|"Jira read/write operations"| JiraTools
+
+%% Tools -> external / data
+CVTool -->|"Load PDF resumes"| ResumeDocs
+JiraTools -->|"REST HTTP calls"| JiraCloud
+JiraTools -->|"Use credentials from"| EnvFile
+
+%% Config & outputs
+CrewDef -->|"Reads agent & task definitions"| ConfigFiles
+ProductAgent -->|"Write plan & execution artifacts"| OutputFiles
+
+%% UI & outputs
+GradioUI -->|"Outputs Overview tab
+Reads markdown artifacts from /output"| OutputFiles
+
+%% UI & Jira tools (utilities)
+GradioUI -->|"Jira Utilities tab
+Direct read-only calls to Jira tools"| JiraTools
+
