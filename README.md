@@ -47,64 +47,6 @@ You can embed them directly in documentation:
 
 ---
 
-## Repository Layout
-
-Key parts of the implementation:
-
-- `pyproject.toml`  
-  Project metadata, Python version (`>=3.10,<3.14`), dependencies, and console scripts:
-  - `jira_ai_assistant` → `jira_ai_assistant.main:run` (CLI entrypoint)
-  - `jira_ai_assistant_ui` → `jira_ai_assistant.gradio_ui:launch` (Gradio UI)
-
-- `env-template` / `.env`  
-  Environment configuration for Jira and OpenAI (see “Environment & Configuration”).
-
-- `src/jira_ai_assistant/crew.py`  
-  CrewAI setup:
-  - `JiraAiAssistant` crew.
-  - `product_manager` agent wired with all tools.
-  - `plan_epic_backlog` and `execute_epic_backlog` tasks.
-  - Hierarchical `planning_guardrail` manager agent for guardrails.
-
-- `src/jira_ai_assistant/config/agents.yaml`  
-  Agent definitions:
-  - `product_manager`: AI Product Manager & Delivery Lead.
-  - `planning_guardrail`: manager agent that reviews plans & execution, enforces guardrails, and never calls Jira tools directly.
-
-- `src/jira_ai_assistant/config/tasks.yaml`  
-  Task definitions:
-  - `plan_epic_backlog`: planning, backlog design, risk capture.
-  - `execute_epic_backlog`: issue creation, assignment, sprint allocation, and capacity notes.
-
-- `src/jira_ai_assistant/tools/jira_tools.py`  
-  All Jira REST tools (see “Tools & Integrations”).
-
-- `src/jira_ai_assistant/tools/files_retrieval_tools.py`  
-  `PdfFileRetriever` for reading PDF CVs from `src/jira_ai_assistant/resume_documents/`.
-
-- `src/jira_ai_assistant/outputs.py`  
-  Pydantic models defining the structured outputs for:
-  - `PlanEpicBacklogOutput`
-  - `ExecuteEpicBacklogOutput`
-
-- `src/jira_ai_assistant/gradio_ui.py`  
-  Gradio 6 UI with three tabs:
-  - **Run Assistant**: kick off the full crew on a given project/epic.
-  - **Outputs Overview**: view the latest `plan_epic_backlog.md` and `execute_epic_backlog.md`.
-  - **Jira Utilities**: read-only inspection of epics, issues, sprints, users, and user history.
-
-- `src/jira_ai_assistant/main.py`  
-  Simple CLI entrypoint used by the `jira_ai_assistant` console script. Loads `.env` via `python-dotenv` and calls the crew with sample `project_key` and `epic_key` (you can edit these for local runs).
-
-- `output/`  
-  Generated artifacts:
-  - `output/plan_epic_backlog.md`
-  - `output/execute_epic_backlog.md`
-
-- `src/jira_ai_assistant/resume_documents/`  
-  Folder for team CV PDFs used by `PdfFileRetriever`.
-
----
 
 ## Environment & Configuration
 
@@ -232,6 +174,67 @@ python -m jira_ai_assistant.gradio_ui
 ```
 
 Gradio will print a local URL (for example, `http://127.0.0.1:7860`) to your terminal—open it in your browser.
+
+---
+
+## Repository Layout
+
+Key parts of the implementation:
+
+- `pyproject.toml`  
+  Project metadata, Python version (`>=3.10,<3.14`), dependencies, and console scripts:
+  - `jira_ai_assistant` → `jira_ai_assistant.main:run` (CLI entrypoint)
+  - `jira_ai_assistant_ui` → `jira_ai_assistant.gradio_ui:launch` (Gradio UI)
+
+- `env-template` / `.env`  
+  Environment configuration for Jira and OpenAI (see “Environment & Configuration”).
+
+- `src/jira_ai_assistant/crew.py`  
+  CrewAI setup:
+  - `JiraAiAssistant` crew.
+  - `product_manager` agent wired with all tools.
+  - `plan_epic_backlog` and `execute_epic_backlog` tasks.
+  - Hierarchical `planning_guardrail` manager agent for guardrails.
+
+- `src/jira_ai_assistant/config/agents.yaml`  
+  Agent definitions:
+  - `product_manager`: AI Product Manager & Delivery Lead.
+  - `planning_guardrail`: manager agent that reviews plans & execution, enforces guardrails, and never calls Jira tools directly.
+
+- `src/jira_ai_assistant/config/tasks.yaml`  
+  Task definitions:
+  - `plan_epic_backlog`: planning, backlog design, risk capture.
+  - `execute_epic_backlog`: issue creation, assignment, sprint allocation, and capacity notes.
+
+- `src/jira_ai_assistant/tools/jira_tools.py`  
+  All Jira REST tools (see “Tools & Integrations”).
+
+- `src/jira_ai_assistant/tools/files_retrieval_tools.py`  
+  `PdfFileRetriever` for reading PDF CVs from `src/jira_ai_assistant/resume_documents/`.
+
+- `src/jira_ai_assistant/outputs.py`  
+  Pydantic models defining the structured outputs for:
+  - `PlanEpicBacklogOutput`
+  - `ExecuteEpicBacklogOutput`
+
+- `src/jira_ai_assistant/gradio_ui.py`  
+  Gradio 6 UI with three tabs:
+  - **Run Assistant**: kick off the full crew on a given project/epic.
+  - **Outputs Overview**: view the latest `plan_epic_backlog.md` and `execute_epic_backlog.md`.
+  - **Jira Utilities**: read-only inspection of epics, issues, sprints, users, and user history.
+
+- `src/jira_ai_assistant/main.py`  
+  Simple CLI entrypoint used by the `jira_ai_assistant` console script. Loads `.env` via `python-dotenv` and calls the crew with sample `project_key` and `epic_key` (you can edit these for local runs).
+
+- `output/`  
+  Generated artifacts:
+  - `output/plan_epic_backlog.md`
+  - `output/execute_epic_backlog.md`
+
+- `src/jira_ai_assistant/resume_documents/`  
+  Folder for team CV PDFs used by `PdfFileRetriever`.
+
+---
 
 ### 3. UI tabs & capabilities
 
