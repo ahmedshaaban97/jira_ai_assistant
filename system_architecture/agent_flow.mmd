@@ -1,0 +1,136 @@
+flowchart TB
+
+%% =======================
+%% LAYERS
+%% =======================
+subgraph FRONTEND["Frontend & User"]
+  UserUI["Gradio 6 UI
+- Run Jira AI Assistant crew
+- View plan/execution artifacts
+- Call Jira utilities (read-only tools)
+"]
+end
+
+subgraph CREW_LAYER["CrewAI Orchestration Layer"]
+
+  ProductManager["Product Manager Agent
+- Role: AI PM & Delivery Lead
+- LLM: gpt-4o-mini
+- Executes tasks:
+  * plan_epic_backlog
+  * execute_epic_backlog
+- Uses Jira & CV tools
+"]
+
+  PlanningGuardrail["Planning Guardrail Manager Agent
+- Hierarchical manager in CrewAI
+- Reviews plans & execution decisions
+- Enforces guardrails, risk policies,
+  and backlog quality
+- Does NOT call Jira tools directly
+"]
+
+end
+
+subgraph TOOLS["Tooling Layer (Python Tools)"]
+
+  subgraph CVTools["CV & Context Tools"]
+    PdfRetriever["PdfFileRetriever
+- Reads CVs from /src/jira_ai_assistant/resume_documents
+- Extracts skills, roles, experience
+"]
+  end
+
+  subgraph JiraTools["Jira Tools (jira_tools.py)"]
+    JiraRead["Read-oriented tools
+- jira_get_all_epics
+- jira_get_issue_details
+- jira_get_all_issues_with_details
+- jira_get_all_users
+- jira_get_user_history
+- jira_get_all_sprints
+- jira_get_sprint_issues
+"]
+
+    JiraWrite["Write/side-effect tools
+- jira_create_issue
+- jira_update_issue
+- jira_assign_issue
+- jira_add_comment
+- jira_create_sprint
+- jira_move_issue_to_sprint
+"]
+  end
+end
+
+subgraph ARTIFACTS["Artifacts & Outputs"]
+  PlanOutput["output/plan_epic_backlog.md
+- Serialized PlanEpicBacklogOutput
+- Full epic backlog plan
+"]
+
+  ExecOutput["output/execute_epic_backlog.md
+- Serialized ExecuteEpicBacklogOutput
+- What was actually created/updated in Jira
+"]
+end
+
+subgraph EXTERNAL["External Systems & Data"]
+  JiraAPI["Jira Cloud REST API
+- Uses JIRA_URL, EMAIL, API_KEY from .env
+- Issues, epics, sprints, comments, users
+"]
+
+  CVFolder["Local CV Folder
+- src/jira_ai_assistant/resume_documents
+- PDF resumes for team members
+"]
+end
+
+
+%% =======================
+%% MAIN FLOW
+%% =======================
+
+%% 1) User request enters via Gradio UI
+UserUI -->|"Project key, epic key, extra JSON inputs"| ProductManager
+
+%% 2) plan_epic_backlog task: discovery & planning
+ProductManager -->|"Load CVs & skills"| PdfRetriever
+PdfRetriever -->|"Structured CV-derived skills & history"| ProductManager
+
+ProductManager -->|"Read epic, issues, sprints, users, history"| JiraRead
+JiraRead -->|"Jira context (epics, issues, users, sprints, history)"| ProductManager
+
+ProductManager -->|"Draft PlanEpicBacklogOutput (structured JSON backlog plan)"| PlanningGuardrail
+
+%% 3) Guardrail review loop on planning
+PlanningGuardrail -->|"Feedback on coverage, risks, feasibility"| ProductManager
+ProductManager -->|"Refine plan if needed"| PlanningGuardrail
+
+PlanningGuardrail -->|"Approved or accepted plan"| ProductManager
+ProductManager -->|"Persist final plan JSON to markdown file"| PlanOutput
+
+PlanOutput -->|"Display plan to user"| UserUI
+
+%% 4) execute_epic_backlog task: creating & scheduling issues
+ProductManager -->|"Use approved plan to drive execution"| JiraWrite
+ProductManager -->|"Supplement with fresh Jira reads if needed"| JiraRead
+
+JiraWrite -->|"Create/update issues, sprints, assignments"| JiraAPI
+JiraRead -->|"Latest Jira state (for validation)"| ProductManager
+
+%% 5) Guardrail review loop on execution
+ProductManager -->|"Execution summary, risks, capacity notes"| PlanningGuardrail
+PlanningGuardrail -->|"Request adjustments or add risk comments"| ProductManager
+
+ProductManager -->|"Finalize ExecuteEpicBacklogOutput JSON"| ExecOutput
+ExecOutput -->|"Surface execution summary to user"| UserUI
+
+%% 6) CV & data flows
+CVFolder -->|"PDF CVs"| PdfRetriever
+
+%% 7) Gradio utilities (read-only Jira tools)
+UserUI -->|"Direct 'Jira Utilities' tab calls (inspect epics, issues, sprints, users, history)"| JiraRead
+JiraRead -->|"JSON inspection results shown in UI"| UserUI
+
