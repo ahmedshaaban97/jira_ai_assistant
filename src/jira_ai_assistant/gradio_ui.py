@@ -45,6 +45,39 @@ def _build_blocks_container() -> gr.Blocks:
     return gr.Blocks(**kwargs)
 
 
+def _format_json_markdown(payload: Any) -> str:
+    """Render structured responses as fenced code blocks for readability."""
+    source = payload
+
+    if hasattr(payload, "model_dump"):
+        try:
+            source = payload.model_dump()
+        except TypeError:
+            pass
+
+    if hasattr(payload, "model_dump_json"):
+        try:
+            source = json.loads(payload.model_dump_json())
+        except (TypeError, json.JSONDecodeError):
+            pass
+
+    if isinstance(source, str):
+        stripped = source.strip()
+        if not stripped:
+            return "_No data returned._"
+        try:
+            source = json.loads(stripped)
+        except json.JSONDecodeError:
+            return f"```text\n{stripped}\n```"
+
+    if isinstance(source, (dict, list)):
+        formatted = json.dumps(source, indent=2, default=str)
+        return f"```json\n{formatted}\n```"
+
+    text = str(source).strip()
+    return f"```text\n{text}\n```" if text else "_No data returned._"
+
+
 def _stringify(data: Any) -> str:
     """Convert crew or tool results into a readable string."""
     if data is None:
@@ -62,13 +95,14 @@ def _stringify(data: Any) -> str:
 
 
 def _read_output_file(path: Path) -> str:
-    """Read helper to surface plan/execution artifacts."""
+    """Read helper to surface plan/execution artifacts with better formatting."""
     if path.exists():
         try:
-            return path.read_text(encoding="utf-8")
+            contents = path.read_text(encoding="utf-8")
         except OSError as exc:  # pragma: no cover - UI helper
-            return f"Could not read {path.name}: {exc}"
-    return f"No output written yet at {path}"
+            return f"Could not read **{path.name}**: `{exc}`"
+        return _format_json_markdown(contents)
+    return f"_No output written yet at `{path}`._"
 
 
 def _merge_inputs(project_key: str, epic_key: str, extra_inputs: str) -> Dict[str, Any]:
@@ -105,7 +139,7 @@ def kickoff_assistant(project_key: str, epic_key: str, extra_inputs: str) -> tup
 
     return (
         status,
-        _stringify(result),
+        _format_json_markdown(result),
         _read_output_file(OUTPUT_PLAN_PATH),
         _read_output_file(OUTPUT_EXECUTION_PATH),
     )
@@ -192,9 +226,12 @@ def build_interface() -> gr.Blocks:
                 epic_key_box = gr.Textbox(label="Epic Key", placeholder="e.g. MH-3")
             run_button = gr.Button("Run Your AI JIRA Assistant!", variant="primary")
             run_status = gr.Textbox(label="Status", interactive=False)
-            result_display = gr.Code(label="Crew Result", language="json")
-            plan_display = gr.Textbox(label="Latest plan_epic_backlog.md", lines=14)
-            exec_display = gr.Textbox(label="Latest execute_epic_backlog.md", lines=14)
+            gr.Markdown("### Crew Result")
+            result_display = gr.Markdown(value="_Awaiting crew run..._")
+            gr.Markdown("### Latest plan_epic_backlog.md")
+            plan_display = gr.Markdown(value="_No plan output yet._")
+            gr.Markdown("### Latest execute_epic_backlog.md")
+            exec_display = gr.Markdown(value="_No execution output yet._")
 
             run_button.click(
                 kickoff_assistant,
@@ -205,8 +242,10 @@ def build_interface() -> gr.Blocks:
 
         with gr.Tab("Outputs Overview"):
             refresh_button = gr.Button("Refresh from disk")
-            plan_view = gr.Textbox(label="Plan Output", lines=16)
-            exec_view = gr.Textbox(label="Execution Output", lines=16)
+            gr.Markdown("### Plan Output")
+            plan_view = gr.Markdown(value="_No plan output yet._")
+            gr.Markdown("### Execution Output")
+            exec_view = gr.Markdown(value="_No execution output yet._")
             refresh_button.click(refresh_outputs, outputs=[plan_view, exec_view], queue=False)
 
         with gr.Tab("Jira Utilities"):
