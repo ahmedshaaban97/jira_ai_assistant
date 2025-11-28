@@ -36,7 +36,7 @@ def route_workflow(user_msg, epic_key=""):
     
     # Backlog indicators
     backlog_keywords = [
-        "epic", "backlog", "breakdown", "plan",
+        "epic", "backlog", "breakdown", "plan", "plan-epic",
         "create issues", "decompose", "generate tasks",
         "create stories", "build backlog", "sprint planning",
         "capacity planning", "new feature", "requirement"
