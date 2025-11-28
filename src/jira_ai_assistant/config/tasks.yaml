@@ -52,6 +52,7 @@ plan_epic_backlog:
           - "schedule_hint": suggested start/due date ranges relative
             to the epic timeline (plain text).
           - "sub_tasks_hint": for Stories, include list of suggested Sub-task titles covering development, testing, documentation, and deployment.
+          - "sprint_hint": suggested sprint name or identifier that this item should eventually be assigned to (do not leave empty for in-scope work).
       - "schedule_overview": plain-text explanation of how work should
         be sequenced over the epic timeline or sprints.
     This JSON must be valid, with no trailing commas, and ready to be
@@ -93,6 +94,10 @@ execute_epic_backlog:
           * Moving newly created or existing issues into the chosen sprint
             using jira_move_issue_to_sprint so workload is balanced across
             people and timeframes.
+      - You MUST ensure that every Story, Task, Bug, and Sub-task created
+        for this epic is assigned to a specific sprint (existing or newly
+        created). Do not leave any epic-related issue in the generic backlog
+        without a sprint.
       - Optionally set story points and labels/components if supported.
     If you detect that the plan is infeasible (e.g., capacity too low
     for the timeline), still create the issues but:
@@ -114,6 +119,8 @@ execute_epic_backlog:
           - "story_points": integer or null.
           - "parent_key": parent issue key for sub-tasks, else null.
           - "sub_tasks_created": for Stories, list of Sub-task keys created under this Story.
+          - "sprint_id": numeric sprint identifier that the issue was moved into.
+          - "sprint_name": human-readable sprint name.
       - "updated_issues": array of objects similar to "created_issues"
         for any issues you updated (dates, assignee, story points,
         labels, or status).

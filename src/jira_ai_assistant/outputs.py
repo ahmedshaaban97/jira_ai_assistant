@@ -28,9 +28,26 @@ class BacklogItem(BaseModel):
     labels: Optional[List[str]] = Field(None, description="List of suggested labels")
     components: Optional[List[str]] = Field(None, description="List of suggested components")
     story_points_hint: Optional[int] = Field(None, description="Suggested story points value")
-    candidate_assignees: List[str] = Field(default_factory=list, description="Ordered list of accountId or names with reasoning")
+    assignee: Optional[str] = Field(
+        None,
+        description="Best candidate assignee accountId for this item (not display name)",
+    )
     dependency_hints: Optional[List[str]] = Field(None, description="List of titles/keys that should precede this item")
     schedule_hint: Optional[str] = Field(None, description="Suggested start/due date ranges relative to epic timeline")
+    sub_tasks_hint: Optional[List[str]] = Field(
+        None,
+        description=(
+            "For Story items, list of suggested Sub-task titles covering development, "
+            "testing, documentation, and deployment/release work"
+        ),
+    )
+    sprint_hint: Optional[str] = Field(
+        None,
+        description=(
+            "Suggested sprint name or identifier this item should eventually be assigned to; "
+            "should not be empty for in-scope work items"
+        ),
+    )
 
 
 class PlanEpicBacklogOutput(BaseModel):
@@ -51,11 +68,33 @@ class CreatedIssue(BaseModel):
     issue_key: str = Field(..., description="Jira issue key (e.g., 'MH-123')")
     issue_type: str = Field(..., description="Type: 'Story', 'Task', 'Bug', 'Sub-task'")
     summary: str = Field(..., description="Final issue summary/title")
-    assignee: Optional[str] = Field(None, description="Display name or accountId of assignee")
+    description_summary: Optional[str] = Field(
+        None,
+        description=(
+            "Brief summary of what was included in the full Jira description "
+            "(e.g., acceptance criteria count, DoD highlights, testing scope)"
+        ),
+    )
+    assignee: Optional[str] = Field(
+        None,
+        description="AccountId of assignee (preferred) or display name if accountId is unavailable",
+    )
     start_date: Optional[str] = Field(None, description="Start date in YYYY-MM-DD format or null")
     due_date: Optional[str] = Field(None, description="Due date in YYYY-MM-DD format or null")
     story_points: Optional[int] = Field(None, description="Story points value or null")
     parent_key: Optional[str] = Field(None, description="Parent issue key for sub-tasks, else null")
+    sub_tasks_created: Optional[List[str]] = Field(
+        None,
+        description="For Story issues, list of Sub-task keys created under this Story",
+    )
+    sprint_id: Optional[int] = Field(
+        None,
+        description="Numeric sprint identifier that this issue was moved into",
+    )
+    sprint_name: Optional[str] = Field(
+        None,
+        description="Human-readable sprint name that this issue belongs to",
+    )
 
 
 class UpdatedIssue(BaseModel):
