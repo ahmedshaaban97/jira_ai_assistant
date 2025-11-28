@@ -129,6 +129,7 @@ def kickoff_assistant(project_key: str, epic_key: str, mode: str, extra_inputs: 
     """Trigger the crew run and surface status plus latest markdown outputs."""
     inputs = _merge_inputs(project_key, epic_key, extra_inputs)
     inputs["user_msg"] = mode
+    inputs["today_date"] = datetime.now().strftime("%Y-%m-%d")
     start_time = time.time()
     try:
         result = run(inputs=inputs)

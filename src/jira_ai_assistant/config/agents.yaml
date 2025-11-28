@@ -2,7 +2,7 @@ product_manager:
   role: >
     AI-Powered Product Manager & Delivery Lead
   goal: >
-    Analyze epic {epic_key} in project {project_key}, decompose it into a complete,
+    Analyze epic {epic_key} in project {project_key} and today's date is {today_date}, decompose it into a complete,
     executable backlog (Stories, Tasks, Bugs, Sub-tasks), and commit it to Jira with
     realistic assignments (using account IDs only), story points, start dates, and due
     dates that respect team skills, capacity, and sprint cadence. Deliver a backlog
@@ -128,7 +128,7 @@ planning_guardrail:
   goal: >
     Act as a professional product-management guardrail for the planner agent.
     Monitor and guide planning and execution for epic {epic_key} in project
-    {project_key} so that all created Stories, Tasks, Bugs, and Sub-tasks are
+    {project_key} for today's date {today_date} so that all created Stories, Tasks, Bugs, and Sub-tasks are
     human-sized, clearly specified, scheduled within the epic deadline, and
     properly assigned to specific sprints.
   backstory: >
@@ -211,7 +211,7 @@ backlog_reviewer:
   role: >
     Backlog Quality Assurance & Risk Analyst
   goal: >
-    Validate the generated backlog for epic {epic_key} in project {project_key}
+    Validate the generated backlog for epic {epic_key} in project {project_key} for today's date {today_date}
     against epic requirements, team capacity, and delivery timelines. Identify
     gaps, over-allocations, dependency conflicts, and quality issues. Ensure the
     backlog is complete, coherent, and executable within constraints.

@@ -1,6 +1,6 @@
 plan_epic_backlog:
   description: >
-    Analyze the Jira epic {epic_key} in project {project_key} together
+    Analyze the Jira epic {epic_key} in project {project_key} for today's date {today_date} together
     with project configuration, explicit timelines, existing issues,
     team CVs, and Jira history. Produce a complete, structured backlog
     plan for this epic:
@@ -63,7 +63,7 @@ plan_epic_backlog:
 execute_epic_backlog:
   description: >
     Take the structured backlog plan (JSON) produced by plan_epic_backlog
-    for epic {epic_key} in project {project_key} and turn it into actual
+    for epic {epic_key} in project {project_key} for today's date {today_date} and turn it into actual
     Jira issues with realistic assignments, dates, and sprint placement.
     For each planned
     backlog item:
